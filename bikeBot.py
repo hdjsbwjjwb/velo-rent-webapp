@@ -128,6 +128,7 @@ def save_rent_to_csv(data, duration_min, total_price, period_str):
         ])
 
 # -------- Обработчики -------- #
+print("===ТЕСТОВЫЙ ЗАПУСК КОДА===")
 
 @dp.message(F.text == "/start")
 async def greet(message: types.Message):
