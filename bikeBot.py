@@ -496,10 +496,6 @@ async def finish_rent(message: types.Message):
     # Печать результатов для проверки
     print(f"Продолжительность аренды: {minutes} минут, округлено до: {rounded_minutes} минут")
 
-    if rounded_minutes == 0:
-        await message.answer("Время аренды меньше 15 минут. Оплата не произведена.")
-        return
-
     start_str = start_time.strftime("%H:%M")
     end_str = end_time.strftime("%H:%M")
     hours_part = rounded_minutes // 60
