@@ -493,6 +493,9 @@ async def finish_rent(message: types.Message):
     if rounded_minutes == 0:
         rounded_minutes = 15  # Любая поездка (даже 1 минута) считается как 15 минут
 
+    print("===ТЕСТ: Работает новая версия finish_rent===")
+
+
     # Для теста в логи (можно убрать потом)
     print(f"Продолжительность аренды: {minutes} минут, округлено до: {rounded_minutes} минут")
 
