@@ -484,16 +484,16 @@ async def finish_rent(message: types.Message):
     duration = end_time - start_time
     minutes = int(duration.total_seconds() // 60)
 
-    # Логика округления времени:
+    # Новая логика округления:
     remainder = minutes % 15
     if remainder < 8:
         rounded_minutes = (minutes // 15) * 15
     else:
         rounded_minutes = ((minutes // 15) + 1) * 15
-    if rounded_minutes == 0 and minutes > 0:
-        rounded_minutes = 15  # Минимальное время всегда 15 минут
+    if rounded_minutes == 0:
+        rounded_minutes = 15  # Любая поездка (даже 1 минута) считается как 15 минут
 
-    # Печать результатов для проверки
+    # Для теста в логи (можно убрать потом)
     print(f"Продолжительность аренды: {minutes} минут, округлено до: {rounded_minutes} минут")
 
     start_str = start_time.strftime("%H:%M")
@@ -518,6 +518,36 @@ async def finish_rent(message: types.Message):
         line = f"{emoji} <b>{cat}</b>: {qty} шт. × {rounded_minutes} мин × {minute_price:.2f}₽ = {price * qty}₽"
         lines.append(line)
         total_price += price * qty
+
+    try:
+        await bot.send_message(
+            ADMIN_ID,
+            f"ЗАВЕРШЕНА АРЕНДА!\n"
+            f"User: {message.from_user.full_name}\n"
+            f"Телефон: {data['phone'] if data.get('phone') else 'Не указан'}\n"
+            f"id: {message.from_user.id}\n"
+            f"Время: {start_str} — {end_str} ({ride_time})\n"
+            f"Корзина: {data['cart']}\n"
+            f"Стоимость: {total_price} руб."
+        )
+    except Exception as e:
+        print(f"Не удалось отправить уведомление админу (конец): {e}")
+
+    save_rent_to_csv(data, rounded_minutes, total_price, period_str)
+
+    keyboard = main_menu_keyboard()
+    await message.answer(
+        f"Вы катаетесь {rounded_minutes} минут(ы) на:\n"
+        + "\n".join(lines) +
+        "\n━━━━━━━━━━━━━━━━━━━━"
+        f"\n<b>💰 Общая стоимость: <u>{total_price} руб.</u></b>\n\n"
+        "<b>💸 Оплата аренды по СБП</b>\n"
+        f"Переведите сумму на номер:\n"
+        f"<code>{PHONE_NUMBER}</code> <u>Сбербанк</u>\n"
+        "Нажмите на номер, чтобы скопировать его.\n"
+        "После оплаты покажите чек сотруднику или отправьте его в аккаунт поддержки.",
+        reply_markup=keyboard
+    )
 
     try:
         await bot.send_message(
