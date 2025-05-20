@@ -509,7 +509,7 @@ async def finish_rent(message: types.Message):
         ride_time = f"{hours_part} ч {minutes_part} мин"
     else:
         ride_time = f"{minutes_part} мин"
-    period_str = f"{start_str} — {end_str}"
+    period_str = f"{date.today().isoformat()} {start_str} — {end_str}"
 
     total_price = 0
     lines = []
@@ -537,6 +537,10 @@ async def finish_rent(message: types.Message):
         )
     except Exception as e:
         print(f"Не удалось отправить уведомление админу (конец): {e}")
+
+        # --- ДОБАВЬ СЮДА! --- сохранение аренды с period_str с датой
+    save_rent_to_csv(data, rounded_minutes, total_price, period_str)
+    
     keyboard = main_menu_keyboard()
     await message.answer(
         f"Вы катаетесь {rounded_minutes} минут(ы) на:\n"
