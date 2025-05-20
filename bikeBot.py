@@ -485,14 +485,13 @@ async def finish_rent(message: types.Message):
     minutes = int(duration.total_seconds() // 60)
 
     # Логика округления времени:
-    if minutes < 15:
-        rounded_minutes = 0  # Если прошло меньше 15 минут, не считаем время
+    remainder = minutes % 15
+    if remainder < 8:
+        rounded_minutes = (minutes // 15) * 15
     else:
-        remainder = minutes % 15
-        if remainder < 8:  # Если остаток меньше 8 минут, округляем в меньшую сторону
-            rounded_minutes = (minutes // 15) * 15
-        else:  # Если остаток больше или равен 8 минутам, округляем в большую сторону
-            rounded_minutes = ((minutes // 15) + 1) * 15
+        rounded_minutes = ((minutes // 15) + 1) * 15
+    if rounded_minutes == 0 and minutes > 0:
+        rounded_minutes = 15  # Минимальное время всегда 15 минут
 
     # Печать результатов для проверки
     print(f"Продолжительность аренды: {minutes} минут, округлено до: {rounded_minutes} минут")
