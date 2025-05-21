@@ -573,16 +573,12 @@ async def stats(message: types.Message):
         return
 
     total_rents = len(reader)
-    today = date.today().isoformat()
-    today_rents = [row for row in reader if today in row["period"]]
-    today_count = len(today_rents)
-
     bikes_counter = Counter()
     total_income = 0
     total_minutes = 0
 
     for row in reader:
-        cart = eval(row["cart"])
+        cart = json.loads(row["cart"])  # ← вот тут теперь безопасно!
         for cat, qty in cart.items():
             bikes_counter[cat] += int(qty)
         total_income += int(row["total_price"])
@@ -595,7 +591,6 @@ async def stats(message: types.Message):
     await message.answer(
         f"📊 <b>Статистика проката</b>\n"
         f"Всего завершённых прокатов: <b>{total_rents}</b>\n"
-        f"Прокатов сегодня: <b>{today_count}</b>\n"
         f"Самый популярный велик: <b>{popular_bike}</b>\n"
         f"Общая выручка: <b>{total_income} руб.</b>\n"
         f"Среднее время аренды: <b>{avg_minutes} мин</b>"
