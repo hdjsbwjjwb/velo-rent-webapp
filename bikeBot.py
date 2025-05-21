@@ -2,6 +2,7 @@ import asyncio
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.types import FSInputFile
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, date
 import json
 import pytz
@@ -619,7 +620,49 @@ async def fallback(message: types.Message):
     )
 
 # -------- Запуск -------- #
+async def send_daily_report():
+    try:
+        with open("rents.csv", encoding="utf-8") as f:
+            reader = list(csv.DictReader(f))
+    except FileNotFoundError:
+        await bot.send_message(ADMIN_ID, "За сегодня нет данных о прокатах.")
+        return
+
+    today = date.today().isoformat()
+    today_rents = [row for row in reader if today in row["period"]]
+
+    if not today_rents:
+        await bot.send_message(ADMIN_ID, "Сегодня прокатов не было.")
+        return
+
+    bikes_counter = Counter()
+    total_income = 0
+    total_minutes = 0
+
+    for row in today_rents:
+        cart = json.loads(row["cart"])
+        for cat, qty in cart.items():
+            bikes_counter[cat] += int(qty)
+        total_income += int(row["total_price"])
+        total_minutes += int(row["minutes"])
+
+    most_popular = bikes_counter.most_common(1)
+    popular_bike = most_popular[0][0] if most_popular else "Нет данных"
+    avg_minutes = total_minutes // len(today_rents) if today_rents else 0
+
+    text = (
+        f"📅 <b>Отчёт за {today}</b>\n"
+        f"Прокатов: <b>{len(today_rents)}</b>\n"
+        f"Самый популярный велик: <b>{popular_bike}</b>\n"
+        f"Выручка за день: <b>{total_income} руб.</b>\n"
+        f"Среднее время аренды: <b>{avg_minutes} мин</b>"
+    )
+    await bot.send_message(ADMIN_ID, text)
+
 async def main():
+    scheduler = AsyncIOScheduler(timezone="Europe/Kaliningrad")
+    scheduler.add_job(send_daily_report, 'cron', hour=20, minute=0)
+    scheduler.start()
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
