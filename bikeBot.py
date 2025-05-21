@@ -577,11 +577,13 @@ async def stats(message: types.Message):
     bikes_counter = Counter()
     total_income = 0
     total_minutes = 0
+    total_bikes = 0
 
     for row in reader:
-        cart = json.loads(row["cart"])  # ← вот тут теперь безопасно!
+        cart = json.loads(row["cart"])
         for cat, qty in cart.items():
             bikes_counter[cat] += int(qty)
+            total_bikes += int(qty)
         total_income += int(row["total_price"])
         total_minutes += int(row["minutes"])
 
@@ -592,10 +594,12 @@ async def stats(message: types.Message):
     await message.answer(
         f"📊 <b>Статистика проката</b>\n"
         f"Всего завершённых прокатов: <b>{total_rents}</b>\n"
+        f"Всего велосипедов выдали: <b>{total_bikes}</b>\n"
         f"Самый популярный велик: <b>{popular_bike}</b>\n"
         f"Общая выручка: <b>{total_income} руб.</b>\n"
         f"Среднее время аренды: <b>{avg_minutes} мин</b>"
     )
+
 
 # --- Показываем время аренды, если аренда активна --- #
 @dp.message(lambda m: m.from_user.id in user_rent_data and user_rent_data[m.from_user.id].get("is_renting"))
@@ -638,11 +642,13 @@ async def send_daily_report():
     bikes_counter = Counter()
     total_income = 0
     total_minutes = 0
+    total_bikes = 0
 
     for row in today_rents:
         cart = json.loads(row["cart"])
         for cat, qty in cart.items():
             bikes_counter[cat] += int(qty)
+            total_bikes += int(qty)
         total_income += int(row["total_price"])
         total_minutes += int(row["minutes"])
 
@@ -653,11 +659,13 @@ async def send_daily_report():
     text = (
         f"📅 <b>Отчёт за {today}</b>\n"
         f"Прокатов: <b>{len(today_rents)}</b>\n"
+        f"Всего велосипедов выдали: <b>{total_bikes}</b>\n"
         f"Самый популярный велик: <b>{popular_bike}</b>\n"
         f"Выручка за день: <b>{total_income} руб.</b>\n"
         f"Среднее время аренды: <b>{avg_minutes} мин</b>"
     )
     await bot.send_message(ADMIN_ID, text)
+
 
 async def main():
     scheduler = AsyncIOScheduler(timezone="Europe/Kaliningrad")
