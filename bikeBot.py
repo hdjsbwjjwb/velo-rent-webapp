@@ -546,20 +546,6 @@ async def finish_rent(message: types.Message):
         reply_markup=keyboard
     )
 
-@dp.message(F.content_type == types.ContentType.CONTACT)
-async def get_contact(message: types.Message):
-    user_id = message.from_user.id
-    data = user_rent_data.get(user_id)
-    if not data:
-        await message.answer("Сначала начните оформление аренды.")
-        return
-    data["phone"] = message.contact.phone_number
-    await start_rent_real(message)
-
-@dp.message(F.text == "/myid")
-async def my_id(message: types.Message):
-    await message.answer(f"Ваш user_id: {message.from_user.id}")
-
 @dp.message(F.text == "/stats")
 async def stats(message: types.Message):
     if message.from_user.id != ADMIN_ID:
@@ -577,13 +563,13 @@ async def stats(message: types.Message):
     bikes_counter = Counter()
     total_income = 0
     total_minutes = 0
-    total_bikes = 0
+    total_bikes_taken = 0  # Новая переменная
 
     for row in reader:
         cart = json.loads(row["cart"])
         for cat, qty in cart.items():
             bikes_counter[cat] += int(qty)
-            total_bikes += int(qty)
+            total_bikes_taken += int(qty)  # Суммируем все взятые велики
         total_income += int(row["total_price"])
         total_minutes += int(row["minutes"])
 
@@ -594,13 +580,13 @@ async def stats(message: types.Message):
     await message.answer(
         f"📊 <b>Статистика проката</b>\n"
         f"Всего завершённых прокатов: <b>{total_rents}</b>\n"
-        f"Всего велосипедов выдали: <b>{total_bikes}</b>\n"
+        f"Всего велосипедов взяли: <b>{total_bikes_taken}</b>\n"
         f"Самый популярный велик: <b>{popular_bike}</b>\n"
         f"Общая выручка: <b>{total_income} руб.</b>\n"
         f"Среднее время аренды: <b>{avg_minutes} мин</b>"
     )
 
-
+    
 # --- Показываем время аренды, если аренда активна --- #
 @dp.message(lambda m: m.from_user.id in user_rent_data and user_rent_data[m.from_user.id].get("is_renting"))
 async def status_time_active(message: types.Message):
