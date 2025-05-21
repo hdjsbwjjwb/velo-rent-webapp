@@ -128,7 +128,6 @@ def save_rent_to_csv(data, duration_min, total_price, period_str):
         ])
 
 # -------- Обработчики -------- #
-print("===ТЕСТОВЫЙ ЗАПУСК КОДА===")
 
 @dp.message(F.text == "/start")
 async def greet(message: types.Message):
@@ -495,9 +494,6 @@ async def finish_rent(message: types.Message):
         rounded_minutes = 15  # Любая поездка (даже 1 минута) считается как 15 минут
 
     print("===ТЕСТ: Работает новая версия finish_rent===")
-
-
-    # Для теста в логи (можно убрать потом)
     print(f"Продолжительность аренды: {minutes} минут, округлено до: {rounded_minutes} минут")
 
     start_str = start_time.strftime("%H:%M")
@@ -552,38 +548,6 @@ async def finish_rent(message: types.Message):
         "После оплаты покажите чек сотруднику или отправьте его в аккаунт поддержки.",
         reply_markup=keyboard
     )
-
-    try:
-        await bot.send_message(
-            ADMIN_ID,
-            f"ЗАВЕРШЕНА АРЕНДА!\n"
-            f"User: {message.from_user.full_name}\n"
-            f"Телефон: {data['phone'] if data.get('phone') else 'Не указан'}\n"
-            f"id: {message.from_user.id}\n"
-            f"Время: {start_str} — {end_str} ({ride_time})\n"
-            f"Корзина: {data['cart']}\n"
-            f"Стоимость: {total_price} руб."
-        )
-    except Exception as e:
-        print(f"Не удалось отправить уведомление админу (конец): {e}")
-
-        # --- ДОБАВЬ СЮДА! --- сохранение аренды с period_str с датой
-    save_rent_to_csv(data, rounded_minutes, total_price, period_str)
-    
-    keyboard = main_menu_keyboard()
-    await message.answer(
-        f"Вы катаетесь {rounded_minutes} минут(ы) на:\n"
-        + "\n".join(lines) +
-        "\n━━━━━━━━━━━━━━━━━━━━"
-        f"\n<b>💰 Общая стоимость: <u>{total_price} руб.</u></b>\n\n"
-        "<b>💸 Оплата аренды по СБП</b>\n"
-        f"Переведите сумму на номер:\n"
-        f"<code>{PHONE_NUMBER}</code> <u>Сбербанк</u>\n"
-        "Нажмите на номер, чтобы скопировать его.\n"
-        "После оплаты покажите чек сотруднику или отправьте его в аккаунт поддержки.",
-        reply_markup=keyboard
-    )
-
 
 @dp.message(F.content_type == types.ContentType.CONTACT)
 async def get_contact(message: types.Message):
