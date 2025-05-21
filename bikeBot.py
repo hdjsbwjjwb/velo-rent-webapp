@@ -3,6 +3,7 @@ from aiogram import Bot, Dispatcher, types, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.types import FSInputFile
 from datetime import datetime, date
+import json
 import pytz
 import os
 import re
@@ -101,12 +102,6 @@ def confirm_rent_inline():
         [types.InlineKeyboardButton(text="↩️ Вернуться к выбору", callback_data="back_to_cart")]
     ])
 
-def confirm_rent_inline():
-    return types.InlineKeyboardMarkup(inline_keyboard=[
-        [types.InlineKeyboardButton(text="✅ Подтвердить аренду", callback_data="confirm_rent")],
-        [types.InlineKeyboardButton(text="↩️ Вернуться к выбору", callback_data="back_to_cart")]
-    ])
-
 # -------- Функция для записи аренды в статистику -------- #
 
 def save_rent_to_csv(data, duration_min, total_price, period_str):
@@ -117,15 +112,15 @@ def save_rent_to_csv(data, duration_min, total_price, period_str):
             writer.writerow([
                 "user_id", "user_name", "phone", "cart", "minutes", "total_price", "period"
             ])
-        writer.writerow([
-            data.get("user_id"),
-            data.get("user_name"),
-            data.get("phone"),
-            str(data.get("cart")),
-            duration_min,
-            total_price,
-            period_str
-        ])
+writer.writerow([
+    data.get("user_id"),
+    data.get("user_name"),
+    data.get("phone"),
+    json.dumps(data.get("cart")),  # Сохраняет корзину как текст в формате JSON!
+    duration_min,
+    total_price,
+    period_str
+])
 
 # -------- Обработчики -------- #
 
