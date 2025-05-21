@@ -563,16 +563,18 @@ async def stats(message: types.Message):
     bikes_counter = Counter()
     total_income = 0
     total_minutes = 0
-    total_bikes_taken = 0  # Новая переменная
 
     for row in reader:
-        cart = json.loads(row["cart"])
+        try:
+            cart = json.loads(row["cart"])
+        except Exception:
+            cart = {}
         for cat, qty in cart.items():
             bikes_counter[cat] += int(qty)
-            total_bikes_taken += int(qty)  # Суммируем все взятые велики
-        total_income += int(row["total_price"])
-        total_minutes += int(row["minutes"])
+        total_income += int(row.get("total_price", 0))
+        total_minutes += int(row.get("minutes", 0))
 
+    total_bikes = sum(bikes_counter.values())
     most_popular = bikes_counter.most_common(1)
     popular_bike = most_popular[0][0] if most_popular else "Нет данных"
     avg_minutes = total_minutes // total_rents if total_rents else 0
@@ -580,11 +582,12 @@ async def stats(message: types.Message):
     await message.answer(
         f"📊 <b>Статистика проката</b>\n"
         f"Всего завершённых прокатов: <b>{total_rents}</b>\n"
-        f"Всего велосипедов взяли: <b>{total_bikes_taken}</b>\n"
+        f"Всего велосипедов взято: <b>{total_bikes}</b>\n"
         f"Самый популярный велик: <b>{popular_bike}</b>\n"
         f"Общая выручка: <b>{total_income} руб.</b>\n"
         f"Среднее время аренды: <b>{avg_minutes} мин</b>"
     )
+
 
     
 # --- Показываем время аренды, если аренда активна --- #
