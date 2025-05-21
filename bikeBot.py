@@ -112,15 +112,16 @@ def save_rent_to_csv(data, duration_min, total_price, period_str):
             writer.writerow([
                 "user_id", "user_name", "phone", "cart", "minutes", "total_price", "period"
             ])
-writer.writerow([
-    data.get("user_id"),
-    data.get("user_name"),
-    data.get("phone"),
-    json.dumps(data.get("cart")),  # Сохраняет корзину как текст в формате JSON!
-    duration_min,
-    total_price,
-    period_str
-])
+        writer.writerow([
+            data.get("user_id"),
+            data.get("user_name"),
+            data.get("phone"),
+            json.dumps(data.get("cart")),  # Сохраняет корзину как текст в формате JSON!
+            duration_min,
+            total_price,
+            period_str
+        ])
+
 
 # -------- Обработчики -------- #
 
