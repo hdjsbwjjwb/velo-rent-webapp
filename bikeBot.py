@@ -23,10 +23,10 @@ SUPPORT_TEXT = (
 PHONE_NUMBER = "+7 906 211-29-40"  # <-- номер для оплаты
 
 bike_categories = {
-    'Детский':     {"hour": 150, "emoji": "🧒", "img": "images/Baby.png"},
-    'Прогулочный': {"hour": 200, "emoji": "🚲", "img": "images/City.png"},
-    'Спортивный':  {"hour": 250, "emoji": "🚵", "img": "images/Sport.png"},
-    'Фэтбайк':     {"hour": 300, "emoji": "🌄", "img": "images/Fat.png"},
+    'Детский':     {"hour": 150, "emoji": "🧒", "img": "images/Baby.jpg"},
+    'Прогулочный': {"hour": 200, "emoji": "🚲", "img": "images/City.jpg"},
+    'Спортивный':  {"hour": 250, "emoji": "🚵", "img": "images/Sport.jpg"},
+    'Фэтбайк':     {"hour": 300, "emoji": "🌄", "img": "images/Fat.jpg"},
 }
 
 QUANTITY_CHOICES = [1, 2, 3, 4, 5]
