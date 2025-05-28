@@ -46,7 +46,6 @@ dp = Dispatcher()
 def main_menu_keyboard():
     return types.ReplyKeyboardMarkup(
         keyboard=[
-            [types.KeyboardButton(text="Арендовать велосипед")],
             [types.KeyboardButton(text="Перезапустить бот"), types.KeyboardButton(text="📞 Поддержка")]
         ],
         resize_keyboard=True
@@ -135,19 +134,26 @@ async def greet(message: types.Message):
             caption=(
                 "<b>Добро пожаловать в сервис велопроката BalticBike!</b>\n\n"
                 "🌊 Прокатитесь по Балтийской косе и побережью на стильных велосипедах!\n"
-                "Выберите категорию, добавьте вело в корзину и нажмите <b>«Начать аренду»</b>.\n\n"
-                "Желаем приятной поездки! 🚲"
-            ),
-            reply_markup=main_menu_keyboard()
+            )
         )
     except Exception:
         await message.answer(
             "<b>Добро пожаловать в сервис велопроката BalticBike!</b>\n\n"
             "🌊 Прокатитесь по Балтийской косе и побережью на стильных велосипедах!\n"
-            "Выберите категорию, добавьте вело в корзину и нажмите <b>«Начать аренду»</b>.\n\n"
-            "Желаем приятной поездки! 🚲",
-            reply_markup=main_menu_keyboard()
         )
+    # Сразу выводим выбор категорий!
+    user_id = message.from_user.id
+    user_rent_data[user_id] = {
+        "cart": {},
+        "start_time": None,
+        "awaiting_quantity": False,
+        "last_category": None,
+        "is_renting": False,
+        "phone": None,
+        "asked_phone": False,
+    }
+    keyboard = categories_keyboard()
+    await message.answer("Выберите категорию велосипеда для аренды:", reply_markup=keyboard)
 
 @dp.message(F.text == "/help")
 async def help_cmd(message: types.Message):
@@ -169,10 +175,18 @@ async def restart_bot(message: types.Message):
     if data and data.get("is_renting"):
         await message.answer("❗ Нельзя перезапустить бот во время активной аренды. Сначала завершите аренду!")
         return
-    keyboard = main_menu_keyboard()
+    user_rent_data[user_id] = {
+        "cart": {},
+        "start_time": None,
+        "awaiting_quantity": False,
+        "last_category": None,
+        "is_renting": False,
+        "phone": None,
+        "asked_phone": False,
+    }
+    keyboard = categories_keyboard()
     await message.answer(
-        "Бот успешно перезапущен!\n\n"
-        "Нажмите «Арендовать велосипед», чтобы начать оформление.",
+        "Бот успешно перезапущен!\n\nВыберите категорию велосипеда для аренды:",
         reply_markup=keyboard
     )
 
@@ -476,12 +490,13 @@ async def finish_rent(message: types.Message):
     if not data or not data["is_renting"]:
         await message.answer("Вы ещё не начали аренду. Для старта — выберите велосипеды и начните аренду.")
         return
+
     end_time = datetime.now(KALININGRAD_TZ)
     start_time = data["start_time"]
     duration = end_time - start_time
     minutes = int(duration.total_seconds() // 60)
 
-    # Новая логика округления:
+    # Новая логика округления
     remainder = minutes % 15
     if remainder < 8:
         rounded_minutes = (minutes // 15) * 15
@@ -489,9 +504,6 @@ async def finish_rent(message: types.Message):
         rounded_minutes = ((minutes // 15) + 1) * 15
     if rounded_minutes == 0:
         rounded_minutes = 15  # Любая поездка (даже 1 минута) считается как 15 минут
-
-    print("===ТЕСТ: Работает новая версия finish_rent===")
-    print(f"Продолжительность аренды: {minutes} минут, округлено до: {rounded_minutes} минут")
 
     start_str = start_time.strftime("%H:%M")
     end_str = end_time.strftime("%H:%M")
@@ -508,14 +520,13 @@ async def finish_rent(message: types.Message):
     for cat, qty in data["cart"].items():
         hour_price = bike_categories[cat]["hour"]
         emoji = bike_categories[cat]['emoji']
-
-        # Расчет стоимости по округленному времени
         minute_price = hour_price / 60
         price = int(minute_price * rounded_minutes)
         line = f"{emoji} <b>{cat}</b>: {qty} шт. × {rounded_minutes} мин × {minute_price:.2f}₽ = {price * qty}₽"
         lines.append(line)
         total_price += price * qty
 
+    # Уведомляем админа
     try:
         await bot.send_message(
             ADMIN_ID,
@@ -532,7 +543,19 @@ async def finish_rent(message: types.Message):
 
     save_rent_to_csv(data, rounded_minutes, total_price, period_str)
 
-    keyboard = main_menu_keyboard()
+    # Сбросить данные аренды, но оставить телефон (чтобы не спрашивать при следующей аренде)
+    user_rent_data[user_id] = {
+        "cart": {},
+        "start_time": None,
+        "awaiting_quantity": False,
+        "last_category": None,
+        "is_renting": False,
+        "phone": data.get("phone"),
+        "asked_phone": False,
+    }
+
+    # Выводим итог и сразу предлагаем выбрать новый велосипед
+    keyboard = categories_keyboard()
     await message.answer(
         f"Вы катаетесь {rounded_minutes} минут(ы) на:\n"
         + "\n".join(lines) +
@@ -542,7 +565,8 @@ async def finish_rent(message: types.Message):
         f"Переведите сумму на номер:\n"
         f"<code>{PHONE_NUMBER}</code> <u>Сбербанк</u>\n"
         "Нажмите на номер, чтобы скопировать его.\n"
-        "После оплаты покажите чек сотруднику или отправьте его в аккаунт поддержки.",
+        "После оплаты покажите чек сотруднику или отправьте его в аккаунт поддержки.\n\n"
+        "<b>Хотите взять велосипед снова?</b> Просто выберите категорию ниже 👇",
         reply_markup=keyboard
     )
 
