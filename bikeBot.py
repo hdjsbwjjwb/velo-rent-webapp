@@ -2,6 +2,7 @@ import asyncio
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.types import FSInputFile
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, date
 import json
 import pytz
@@ -45,7 +46,6 @@ dp = Dispatcher()
 def main_menu_keyboard():
     return types.ReplyKeyboardMarkup(
         keyboard=[
-            [types.KeyboardButton(text="Арендовать велосипед")],
             [types.KeyboardButton(text="Перезапустить бот"), types.KeyboardButton(text="📞 Поддержка")]
         ],
         resize_keyboard=True
@@ -134,19 +134,26 @@ async def greet(message: types.Message):
             caption=(
                 "<b>Добро пожаловать в сервис велопроката BalticBike!</b>\n\n"
                 "🌊 Прокатитесь по Балтийской косе и побережью на стильных велосипедах!\n"
-                "Выберите категорию, добавьте вело в корзину и нажмите <b>«Начать аренду»</b>.\n\n"
-                "Желаем приятной поездки! 🚲"
-            ),
-            reply_markup=main_menu_keyboard()
+            )
         )
     except Exception:
         await message.answer(
             "<b>Добро пожаловать в сервис велопроката BalticBike!</b>\n\n"
             "🌊 Прокатитесь по Балтийской косе и побережью на стильных велосипедах!\n"
-            "Выберите категорию, добавьте вело в корзину и нажмите <b>«Начать аренду»</b>.\n\n"
-            "Желаем приятной поездки! 🚲",
-            reply_markup=main_menu_keyboard()
         )
+    # Сразу выводим выбор категорий!
+    user_id = message.from_user.id
+    user_rent_data[user_id] = {
+        "cart": {},
+        "start_time": None,
+        "awaiting_quantity": False,
+        "last_category": None,
+        "is_renting": False,
+        "phone": None,
+        "asked_phone": False,
+    }
+    keyboard = categories_keyboard()
+    await message.answer("Выберите категорию велосипеда для аренды:", reply_markup=keyboard)
 
 @dp.message(F.text == "/help")
 async def help_cmd(message: types.Message):
@@ -168,10 +175,18 @@ async def restart_bot(message: types.Message):
     if data and data.get("is_renting"):
         await message.answer("❗ Нельзя перезапустить бот во время активной аренды. Сначала завершите аренду!")
         return
-    keyboard = main_menu_keyboard()
+    user_rent_data[user_id] = {
+        "cart": {},
+        "start_time": None,
+        "awaiting_quantity": False,
+        "last_category": None,
+        "is_renting": False,
+        "phone": None,
+        "asked_phone": False,
+    }
+    keyboard = categories_keyboard()
     await message.answer(
-        "Бот успешно перезапущен!\n\n"
-        "Нажмите «Арендовать велосипед», чтобы начать оформление.",
+        "Бот успешно перезапущен!\n\nВыберите категорию велосипеда для аренды:",
         reply_markup=keyboard
     )
 
@@ -475,12 +490,13 @@ async def finish_rent(message: types.Message):
     if not data or not data["is_renting"]:
         await message.answer("Вы ещё не начали аренду. Для старта — выберите велосипеды и начните аренду.")
         return
+
     end_time = datetime.now(KALININGRAD_TZ)
     start_time = data["start_time"]
     duration = end_time - start_time
     minutes = int(duration.total_seconds() // 60)
 
-    # Новая логика округления:
+    # Новая логика округления
     remainder = minutes % 15
     if remainder < 8:
         rounded_minutes = (minutes // 15) * 15
@@ -488,9 +504,6 @@ async def finish_rent(message: types.Message):
         rounded_minutes = ((minutes // 15) + 1) * 15
     if rounded_minutes == 0:
         rounded_minutes = 15  # Любая поездка (даже 1 минута) считается как 15 минут
-
-    print("===ТЕСТ: Работает новая версия finish_rent===")
-    print(f"Продолжительность аренды: {minutes} минут, округлено до: {rounded_minutes} минут")
 
     start_str = start_time.strftime("%H:%M")
     end_str = end_time.strftime("%H:%M")
@@ -507,14 +520,13 @@ async def finish_rent(message: types.Message):
     for cat, qty in data["cart"].items():
         hour_price = bike_categories[cat]["hour"]
         emoji = bike_categories[cat]['emoji']
-
-        # Расчет стоимости по округленному времени
         minute_price = hour_price / 60
         price = int(minute_price * rounded_minutes)
         line = f"{emoji} <b>{cat}</b>: {qty} шт. × {rounded_minutes} мин × {minute_price:.2f}₽ = {price * qty}₽"
         lines.append(line)
         total_price += price * qty
 
+    # Уведомляем админа
     try:
         await bot.send_message(
             ADMIN_ID,
@@ -531,7 +543,19 @@ async def finish_rent(message: types.Message):
 
     save_rent_to_csv(data, rounded_minutes, total_price, period_str)
 
-    keyboard = main_menu_keyboard()
+    # Сбросить данные аренды, но оставить телефон (чтобы не спрашивать при следующей аренде)
+    user_rent_data[user_id] = {
+        "cart": {},
+        "start_time": None,
+        "awaiting_quantity": False,
+        "last_category": None,
+        "is_renting": False,
+        "phone": data.get("phone"),
+        "asked_phone": False,
+    }
+
+    # Выводим итог и сразу предлагаем выбрать новый велосипед
+    keyboard = categories_keyboard()
     await message.answer(
         f"Вы катаетесь {rounded_minutes} минут(ы) на:\n"
         + "\n".join(lines) +
@@ -541,23 +565,10 @@ async def finish_rent(message: types.Message):
         f"Переведите сумму на номер:\n"
         f"<code>{PHONE_NUMBER}</code> <u>Сбербанк</u>\n"
         "Нажмите на номер, чтобы скопировать его.\n"
-        "После оплаты покажите чек сотруднику или отправьте его в аккаунт поддержки.",
+        "После оплаты покажите чек сотруднику или отправьте его в аккаунт поддержки.\n\n"
+        "<b>Хотите взять велосипед снова?</b> Просто выберите категорию ниже 👇",
         reply_markup=keyboard
     )
-
-@dp.message(F.content_type == types.ContentType.CONTACT)
-async def get_contact(message: types.Message):
-    user_id = message.from_user.id
-    data = user_rent_data.get(user_id)
-    if not data:
-        await message.answer("Сначала начните оформление аренды.")
-        return
-    data["phone"] = message.contact.phone_number
-    await start_rent_real(message)
-
-@dp.message(F.text == "/myid")
-async def my_id(message: types.Message):
-    await message.answer(f"Ваш user_id: {message.from_user.id}")
 
 @dp.message(F.text == "/stats")
 async def stats(message: types.Message):
@@ -578,12 +589,16 @@ async def stats(message: types.Message):
     total_minutes = 0
 
     for row in reader:
-        cart = json.loads(row["cart"])  # ← вот тут теперь безопасно!
+        try:
+            cart = json.loads(row["cart"])
+        except Exception:
+            cart = {}
         for cat, qty in cart.items():
             bikes_counter[cat] += int(qty)
-        total_income += int(row["total_price"])
-        total_minutes += int(row["minutes"])
+        total_income += int(row.get("total_price", 0))
+        total_minutes += int(row.get("minutes", 0))
 
+    total_bikes = sum(bikes_counter.values())
     most_popular = bikes_counter.most_common(1)
     popular_bike = most_popular[0][0] if most_popular else "Нет данных"
     avg_minutes = total_minutes // total_rents if total_rents else 0
@@ -591,11 +606,14 @@ async def stats(message: types.Message):
     await message.answer(
         f"📊 <b>Статистика проката</b>\n"
         f"Всего завершённых прокатов: <b>{total_rents}</b>\n"
+        f"Всего велосипедов взято: <b>{total_bikes}</b>\n"
         f"Самый популярный велик: <b>{popular_bike}</b>\n"
         f"Общая выручка: <b>{total_income} руб.</b>\n"
         f"Среднее время аренды: <b>{avg_minutes} мин</b>"
     )
 
+
+    
 # --- Показываем время аренды, если аренда активна --- #
 @dp.message(lambda m: m.from_user.id in user_rent_data and user_rent_data[m.from_user.id].get("is_renting"))
 async def status_time_active(message: types.Message):
@@ -619,7 +637,53 @@ async def fallback(message: types.Message):
     )
 
 # -------- Запуск -------- #
+async def send_daily_report():
+    try:
+        with open("rents.csv", encoding="utf-8") as f:
+            reader = list(csv.DictReader(f))
+    except FileNotFoundError:
+        await bot.send_message(ADMIN_ID, "За сегодня нет данных о прокатах.")
+        return
+
+    today = date.today().isoformat()
+    today_rents = [row for row in reader if today in row["period"]]
+
+    if not today_rents:
+        await bot.send_message(ADMIN_ID, "Сегодня прокатов не было.")
+        return
+
+    bikes_counter = Counter()
+    total_income = 0
+    total_minutes = 0
+    total_bikes = 0
+
+    for row in today_rents:
+        cart = json.loads(row["cart"])
+        for cat, qty in cart.items():
+            bikes_counter[cat] += int(qty)
+            total_bikes += int(qty)
+        total_income += int(row["total_price"])
+        total_minutes += int(row["minutes"])
+
+    most_popular = bikes_counter.most_common(1)
+    popular_bike = most_popular[0][0] if most_popular else "Нет данных"
+    avg_minutes = total_minutes // len(today_rents) if today_rents else 0
+
+    text = (
+        f"📅 <b>Отчёт за {today}</b>\n"
+        f"Прокатов: <b>{len(today_rents)}</b>\n"
+        f"Всего велосипедов выдали: <b>{total_bikes}</b>\n"
+        f"Самый популярный велик: <b>{popular_bike}</b>\n"
+        f"Выручка за день: <b>{total_income} руб.</b>\n"
+        f"Среднее время аренды: <b>{avg_minutes} мин</b>"
+    )
+    await bot.send_message(ADMIN_ID, text)
+
+
 async def main():
+    scheduler = AsyncIOScheduler(timezone="Europe/Kaliningrad")
+    scheduler.add_job(send_daily_report, 'interval', minutes=1)
+    scheduler.start()
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
