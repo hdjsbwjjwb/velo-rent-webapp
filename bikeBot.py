@@ -434,7 +434,11 @@ async def handle_contact(message: types.Message):
     data["asked_phone"] = False
 
     await message.answer("Спасибо! Ваш номер сохранён. Оформляем аренду…")
-    await start_rent_real(message)
+    try:
+        await start_rent_real(message)
+    except Exception as e:
+        await message.answer(f"Ошибка при запуске аренды: {e}")
+        print("Ошибка при запуске аренды:", e)
 
 
 @dp.message(F.text == "🔴 Завершить аренду")
