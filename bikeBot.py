@@ -195,21 +195,17 @@ async def support(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
-    # Если аренда активна, показываем клавиатуру аренды, иначе просто информацию о поддержке
     if data and data.get("is_renting"):
-        # Если аренда активна, показываем клавиатуру с кнопками для аренды
         await message.answer(
             SUPPORT_TEXT,
-            reply_markup=during_rent_keyboard()  # Клавиатура с аренды
+            reply_markup=during_rent_keyboard()
         )
     else:
-        # Если аренда не активна, показываем общую информацию
+        # Показываем категории (основное меню)
         await message.answer(
             SUPPORT_TEXT,
-            reply_markup=main_menu_keyboard()  # Основное меню без кнопок аренды
+            reply_markup=categories_keyboard()
         )
-
-
 
 @dp.message(F.text == "⏱ Сколько времени катаюсь?")
 async def time_spent(message: types.Message):
