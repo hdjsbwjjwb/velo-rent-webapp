@@ -2,7 +2,6 @@ import asyncio
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.types import FSInputFile
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, date
 import json
 import pytz
@@ -189,6 +188,14 @@ async def restart_bot(message: types.Message):
         "Бот успешно перезапущен!\n\nВыберите категорию велосипеда для аренды:",
         reply_markup=keyboard
     )
+
+@dp.message(F.text == "/report")
+async def admin_report(message: types.Message):
+    if message.from_user.id != ADMIN_ID:
+        await message.answer("Нет доступа.")
+        return
+    await send_daily_report()
+    await message.answer("Отчёт отправлен.")
 
 @dp.message(F.text == "📞 Поддержка")
 async def support(message: types.Message):
@@ -664,13 +671,6 @@ async def send_daily_report():
         f"Среднее время аренды: <b>{avg_minutes} мин</b>"
     )
     await bot.send_message(ADMIN_ID, text)
-
-
-async def main():
-    scheduler = AsyncIOScheduler(timezone="Europe/Kaliningrad")
-    scheduler.add_job(send_daily_report, 'interval', minutes=1)
-    scheduler.start()
-    await dp.start_polling(bot)
 
 if __name__ == "__main__":
     asyncio.run(main())
