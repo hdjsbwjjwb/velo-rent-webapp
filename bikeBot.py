@@ -376,14 +376,7 @@ async def start_rent_preview(message: types.Message):
         f"{bike_categories[cat]['emoji']} <b>{cat}</b>: {cnt} шт. ({bike_categories[cat]['hour']}₽/ч)"
         for cat, cnt in data["cart"].items()
     ])
-
     total_hour_price = sum([bike_categories[cat]['hour'] * cnt for cat, cnt in data["cart"].items()])
-
-    # Убираем клавиатуру при нажатии "Начать аренду"
-    await message.answer(
-        "Вы начали оформление аренды. Пожалуйста, подождите...",
-        reply_markup=types.ReplyKeyboardRemove()  # Убираем клавиатуру
-    )
 
     await message.answer(
         "Прежде чем поехать, проверьте велосипед и убедитесь, что всё работает:\n"
@@ -395,16 +388,16 @@ async def start_rent_preview(message: types.Message):
         "- <b>Не перегружайте велосипед.</b> Удобство важнее.\n"
         "- <b>Осторожно на подъёмах и спусках.</b> Дороги могут быть неровными.\n"
         "- <b>Берегите велосипед.</b> Возвращайте его в хорошем состоянии.\n\n"
-
     )
 
-    # Отправляем информацию о заказе
     await message.answer(
         f"Вы выбрали:\n{cart_str}\n━━━━━━━━━━━━━━━━━━━━\n"
         f"<b>💸 Стоимость за 1 час: {total_hour_price} руб.</b>\n\n"
-        "Нажмите «Подтвердить аренду», чтобы начать, или вернитесь к выбору.",
-        reply_markup=confirm_rent_inline()  # Кнопка подтверждения аренды
+        "Для оформления аренды отправьте свой номер телефона кнопкой ниже 👇",
+        reply_markup=contact_keyboard()
     )
+    data["asked_phone"] = True
+
 
 @dp.callback_query(F.data == "back_to_cart")
 async def back_to_cart(callback: types.CallbackQuery):
@@ -427,61 +420,22 @@ async def back_to_cart(callback: types.CallbackQuery):
         reply_markup=cart_keyboard()  # Возвращаем клавиатуру корзины
     )
 
-@dp.callback_query(F.data == "confirm_rent")
-async def confirm_rent_callback(callback: types.CallbackQuery):
-    user_id = callback.from_user.id
+@dp.message(lambda m: m.contact is not None)
+async def handle_contact(message: types.Message):
+    user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
     if not data:
-        await callback.message.answer("Ошибка! Начните оформление заново.")
+        await message.answer("Пожалуйста, начните оформление аренды сначала через /start.")
         return
 
-    if not data["phone"] and not data["asked_phone"]:
-        data["asked_phone"] = True
-        await callback.message.answer("Пожалуйста, отправьте свой номер телефона кнопкой ниже для оформления аренды.", reply_markup=contact_keyboard())
-        await callback.answer()
-        return
+    phone = message.contact.phone_number
+    data["phone"] = phone
+    data["asked_phone"] = False
 
-    # Убираем только кнопки "Подтвердить аренду" и "Вернуться к выбору"
-    await callback.message.edit_reply_markup(reply_markup=None)
+    await message.answer("Спасибо! Ваш номер сохранён. Оформляем аренду…")
+    await start_rent_real(message)
 
-    # Запускаем процесс аренды
-    await start_rent_real(callback.message)
-    await callback.answer()
-
-async def start_rent_real(message: types.Message):
-    user_id = message.from_user.id
-    data = user_rent_data[user_id]
-    data["start_time"] = datetime.now(KALININGRAD_TZ)
-    data["is_renting"] = True
-    keyboard = during_rent_keyboard()
-    cart_str = "\n".join([
-        f"{bike_categories[cat]['emoji']} <b>{cat}</b>: {cnt} шт. ({bike_categories[cat]['hour']}₽/ч)"
-        for cat, cnt in data["cart"].items()
-    ])
-
-    total_hour_price = sum([bike_categories[cat]['hour'] * qty for cat, qty in data["cart"].items()])
-
-    try:
-        await bot.send_message(
-            ADMIN_ID,
-            f"НАЧАЛАСЬ АРЕНДА!\n"
-            f"User: {message.from_user.full_name}\n"
-            f"Телефон: {data['phone'] if data['phone'] else 'Не указан'}\n"
-            f"id: {message.from_user.id}\n"
-            f"Время: {datetime.now(KALININGRAD_TZ).strftime('%H:%M')}\n"
-            f"Корзина:\n{cart_str}"
-        )
-    except Exception as e:
-        print(f"Не удалось отправить уведомление админу (начало): {e}")
-
-    await message.answer(
-        f"Вы арендовали:\n{cart_str}\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
-        f"<b>💸 Стоимость всех велосипедов за 1 час: {total_hour_price} руб.</b>\n\n"
-        "Когда закончите кататься — нажмите 'Завершить аренду'.",
-        reply_markup=keyboard
-    )
 
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
