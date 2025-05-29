@@ -439,7 +439,39 @@ async def handle_contact(message: types.Message):
     except Exception as e:
         await message.answer(f"Ошибка при запуске аренды: {e}")
         print("Ошибка при запуске аренды:", e)
+async def start_rent_real(message: types.Message):
+    user_id = message.from_user.id
+    data = user_rent_data[user_id]
+    data["start_time"] = datetime.now(KALININGRAD_TZ)
+    data["is_renting"] = True
+    keyboard = during_rent_keyboard()
+    cart_str = "\n".join([
+        f"{bike_categories[cat]['emoji']} <b>{cat}</b>: {cnt} шт. ({bike_categories[cat]['hour']}₽/ч)"
+        for cat, cnt in data["cart"].items()
+    ])
 
+    total_hour_price = sum([bike_categories[cat]['hour'] * qty for cat, qty in data["cart"].items()])
+
+    try:
+        await bot.send_message(
+            ADMIN_ID,
+            f"НАЧАЛАСЬ АРЕНДА!\n"
+            f"User: {message.from_user.full_name}\n"
+            f"Телефон: {data['phone'] if data['phone'] else 'Не указан'}\n"
+            f"id: {message.from_user.id}\n"
+            f"Время: {datetime.now(KALININGRAD_TZ).strftime('%H:%M')}\n"
+            f"Корзина:\n{cart_str}"
+        )
+    except Exception as e:
+        print(f"Не удалось отправить уведомление админу (начало): {e}")
+
+    await message.answer(
+        f"Вы арендовали:\n{cart_str}\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        f"<b>💸 Стоимость всех велосипедов за 1 час: {total_hour_price} руб.</b>\n\n"
+        "Когда закончите кататься — нажмите 'Завершить аренду'.",
+        reply_markup=keyboard
+    )
 
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
