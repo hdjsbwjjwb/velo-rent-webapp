@@ -17,28 +17,30 @@ TOKEN = os.getenv("BOT_TOKEN")  # получаем токен
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-print("save_rent_to_gsheet вызвана")
 
 def save_rent_to_gsheet(data, duration_min, total_price, period_str):
-    scope = [
-        "https://spreadsheets.google.com/feeds",
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive"
-    ]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
-    client = gspread.authorize(creds)
+    print("save_rent_to_gsheet вызвана")
+    try:
+        scope = [
+            "https://spreadsheets.google.com/feeds",
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive"
+        ]
+        creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+        client = gspread.authorize(creds)
+        sheet = client.open_by_key("1dXcmUr0Dtx1fylu3DaUdZigFwkjTKnPCkPf9OcuiGOE").sheet1
+        sheet.append_row([
+            data.get("user_id"),
+            data.get("user_name"),
+            data.get("phone"),
+            json.dumps(data.get("cart"), ensure_ascii=False),
+            duration_min,
+            total_price,
+            period_str
+        ])
+    except Exception as e:
+        print(f"Ошибка при записи в Google Таблицу: {e}")
 
-    sheet = client.open_by_key("1dXcmUr0Dtx1fylu3DaUdZigFwkjTKnPCkPf9OcuiGOE").sheet1
-
-    sheet.append_row([
-        data.get("user_id"),
-        data.get("user_name"),
-        data.get("phone"),
-        json.dumps(data.get("cart"), ensure_ascii=False),
-        duration_min,
-        total_price,
-        period_str
-    ])
 
 ADMIN_ID = 6425885445  # <-- сюда свой user_id
 
@@ -129,26 +131,6 @@ def confirm_rent_inline():
         [types.InlineKeyboardButton(text="✅ Подтвердить аренду", callback_data="confirm_rent")],
         [types.InlineKeyboardButton(text="↩️ Вернуться к выбору", callback_data="back_to_cart")]
     ])
-
-# -------- Функция для записи аренды в статистику -------- #
-
-def save_rent_to_gsheet(data, duration_min, total_price, period_str):
-    file_exists = os.path.isfile("rents.csv")
-    with open("rents.csv", "a", encoding="utf-8", newline="") as f:
-        writer = csv.writer(f)
-        if not file_exists:
-            writer.writerow([
-                "user_id", "user_name", "phone", "cart", "minutes", "total_price", "period"
-            ])
-        writer.writerow([
-            data.get("user_id"),
-            data.get("user_name"),
-            data.get("phone"),
-            json.dumps(data.get("cart")),  # Сохраняет корзину как текст в формате JSON!
-            duration_min,
-            total_price,
-            period_str
-        ])
 
 
 # -------- Обработчики -------- #
