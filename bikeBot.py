@@ -9,10 +9,34 @@ import os
 import re
 import csv
 from collections import Counter
-from dotenv import load_dotenv
 
+from dotenv import load_dotenv
 load_dotenv()  # загружает переменные окружения из .env
 TOKEN = os.getenv("BOT_TOKEN")  # получаем токен
+
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
+def save_rent_to_gsheet(data, duration_min, total_price, period_str):
+    scope = [
+        "https://spreadsheets.google.com/feeds",
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
+    creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+    client = gspread.authorize(creds)
+
+    sheet = client.open_by_key("1dXcmUr0Dtx1fylu3DaUdZigFwkjTKnPCkPf9OcuiGOE").sheet1
+
+    sheet.append_row([
+        data.get("user_id"),
+        data.get("user_name"),
+        data.get("phone"),
+        json.dumps(data.get("cart"), ensure_ascii=False),
+        duration_min,
+        total_price,
+        period_str
+    ])
 
 ADMIN_ID = 6425885445  # <-- сюда свой user_id
 
@@ -106,7 +130,7 @@ def confirm_rent_inline():
 
 # -------- Функция для записи аренды в статистику -------- #
 
-def save_rent_to_csv(data, duration_min, total_price, period_str):
+def save_rent_to_gsheet(data, duration_min, total_price, period_str):
     file_exists = os.path.isfile("rents.csv")
     with open("rents.csv", "a", encoding="utf-8", newline="") as f:
         writer = csv.writer(f)
