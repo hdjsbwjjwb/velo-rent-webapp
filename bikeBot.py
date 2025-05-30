@@ -9,8 +9,11 @@ import os
 import re
 import csv
 from collections import Counter
+from dotenv import load_dotenv
 
-TOKEN = '7653332960:AAGWP4vmKyaoQ-8dYyR9XIm7j0G-9aoHwnE'
+load_dotenv()  # загружает переменные окружения из .env
+TOKEN = os.getenv("BOT_TOKEN")  # получаем токен
+
 ADMIN_ID = 6425885445  # <-- сюда свой user_id
 
 SUPPORT_TEXT = (
