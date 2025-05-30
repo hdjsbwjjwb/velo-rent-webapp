@@ -17,6 +17,8 @@ TOKEN = os.getenv("BOT_TOKEN")  # получаем токен
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
+print("save_rent_to_gsheet вызвана")
+
 def save_rent_to_gsheet(data, duration_min, total_price, period_str):
     scope = [
         "https://spreadsheets.google.com/feeds",
@@ -467,6 +469,7 @@ async def handle_contact(message: types.Message):
     try:
         await start_rent_real(message)
     except Exception as e:
+        print(f"Ошибка при записи в Google Таблицу: {e}")
         await message.answer(f"Ошибка при запуске аренды: {e}")
         print("Ошибка при запуске аренды:", e)
 async def start_rent_real(message: types.Message):
