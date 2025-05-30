@@ -38,8 +38,12 @@ def save_rent_to_gsheet(data, duration_min, total_price, period_str):
             total_price,
             period_str
         ])
+        print("✅ Успешно добавлено в Google Таблицу")
     except Exception as e:
         print(f"Ошибка при записи в Google Таблицу: {e}")
+        with open("gspread_error.log", "a") as f:
+            f.write(f"{datetime.now()} — Ошибка: {e}\n")
+
 
 
 ADMIN_ID = 6425885445  # <-- сюда свой user_id
