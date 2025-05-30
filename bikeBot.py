@@ -561,7 +561,7 @@ async def finish_rent(message: types.Message):
     except Exception as e:
         print(f"Не удалось отправить уведомление админу (конец): {e}")
 
-    save_rent_to_csv(data, rounded_minutes, total_price, period_str)
+    save_rent_to_gsheet(data, rounded_minutes, total_price, period_str)
 
     # Сбросить данные аренды, но оставить телефон (чтобы не спрашивать при следующей аренде)
     user_rent_data[user_id] = {
