@@ -18,6 +18,8 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 
+import traceback
+
 def save_rent_to_gsheet(data, duration_min, total_price, period_str):
     print("save_rent_to_gsheet вызвана")
     try:
@@ -40,11 +42,11 @@ def save_rent_to_gsheet(data, duration_min, total_price, period_str):
         ])
         print("✅ Успешно добавлено в Google Таблицу")
     except Exception as e:
-        print(f"Ошибка при записи в Google Таблицу: {e}")
+        print("Ошибка при записи в Google Таблицу:")
+        traceback.print_exc()
         with open("gspread_error.log", "a") as f:
-            f.write(f"{datetime.now()} — Ошибка: {e}\n")
-
-
+            f.write(f"{datetime.now()} — Ошибка:\n")
+            traceback.print_exc(file=f)
 
 ADMIN_ID = 6425885445  # <-- сюда свой user_id
 
