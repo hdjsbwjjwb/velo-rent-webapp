@@ -31,11 +31,15 @@ def save_rent_to_gsheet(data, duration_min, total_price, period_str):
         creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
         client = gspread.authorize(creds)
         sheet = client.open_by_key("1dXcmUr0Dtx1fylu3DaUdZigFwkjTKnPCkPf9OcuiGOE").sheet1
+        
+        cart_human = "\n".join([f"{cat} — {qty}" for cat, qty in data.get("cart", {}).items()])
+        
         sheet.append_row([
             data.get("user_id"),
             data.get("user_name"),
             data.get("phone"),
             json.dumps(data.get("cart"), ensure_ascii=False),
+            cart_human,
             duration_min,
             total_price,
             period_str
