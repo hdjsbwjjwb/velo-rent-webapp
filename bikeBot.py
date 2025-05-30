@@ -552,7 +552,14 @@ async def finish_rent(message: types.Message):
     except Exception as e:
         print(f"Не удалось отправить уведомление админу (конец): {e}")
 
-    save_rent_to_gsheet(data, rounded_minutes, total_price, period_str)
+    # --- Вот ТУТ главный правильный вызов:
+    save_rent_to_gsheet({
+        "user_id": message.from_user.id,
+        "user_name": message.from_user.full_name,
+        "phone": data.get("phone"),
+        "cart": data.get("cart"),
+    }, rounded_minutes, total_price, period_str)
+    # ---
 
     # Сбросить данные аренды, но оставить телефон (чтобы не спрашивать при следующей аренде)
     user_rent_data[user_id] = {
@@ -564,7 +571,7 @@ async def finish_rent(message: types.Message):
         "phone": data.get("phone"),
         "asked_phone": False,
     }
-    
+
     keyboard = categories_keyboard()
     await message.answer(
         f"⏰ <b>Вы катались {ride_time} на:</b>\n"
