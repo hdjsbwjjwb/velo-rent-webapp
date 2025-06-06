@@ -189,13 +189,11 @@ async def active_rents(message: types.Message):
     for uid, data in user_rent_data.items():
         if data.get("is_renting"):
             start_time = data.get("start_time")
-            # Универсально: работаем и со строкой, и с datetime
             if start_time:
                 if isinstance(start_time, str):
                     try:
                         start_time = datetime.fromisoformat(start_time)
                     except Exception:
-                        # fallback если вдруг был другой формат
                         start_time = now
                 duration = now - start_time
                 minutes = int(duration.total_seconds() // 60)
@@ -203,11 +201,8 @@ async def active_rents(message: types.Message):
             else:
                 minutes = "-"
                 start_str = "-"
-            # Имя пользователя если есть, иначе "-"
             user_name = data.get("user_name") or "-"
-            # Телефон
             phone = data.get("phone") or "-"
-            # Велики (читаемо)
             cart = data.get("cart", {})
             if cart:
                 bikes = "\n".join([f"{cat}: {qty}" for cat, qty in cart.items()])
@@ -230,25 +225,49 @@ async def active_rents(message: types.Message):
 
     df = pd.DataFrame(active)
 
-    # Делаем красивую табличку
-    fig, ax = plt.subplots(figsize=(7, 1 + 0.5 * len(df)))
+    fig, ax = plt.subplots(figsize=(8, 1.1 + 0.55 * len(df)))
     ax.axis('off')
+
+    # Цвета для таблицы
+    header_color = '#ffe066'  # жёлтый (как шеринговые велики)
+    row_colors = ['#f9f9f9', '#eafaf1']  # чередующиеся строки
+    edge_color = '#bdbdbd'
+    text_color = '#212529'
+
+    # Рисуем саму таблицу
     table = ax.table(
         cellText=df.values,
         colLabels=df.columns,
-        loc='center',
-        cellLoc='center'
+        cellLoc='center',
+        loc='center'
     )
-    table.auto_set_font_size(False)
-    table.set_fontsize(12)
-    table.scale(1, 1.7)
 
+    table.auto_set_font_size(False)
+    table.set_fontsize(13)
+    table.scale(1, 1.55)
+
+    # Красим шапку
+    for (row, col), cell in table.get_celld().items():
+        cell.set_linewidth(1.4)
+        if row == 0:
+            cell.set_facecolor(header_color)
+            cell.set_text_props(weight='bold', color=text_color)
+        elif row % 2 == 1:
+            cell.set_facecolor(row_colors[0])
+        else:
+            cell.set_facecolor(row_colors[1])
+        cell.set_edgecolor(edge_color)
+        cell.set_fontsize(13)
+        cell.set_text_props(va='center', ha='center', fontname='Arial')
+
+    # Можно добавить логотип — просто вставь картинку сверху (если захочешь — скинешь логотип)
+
+    fig.tight_layout(pad=2.5)
     img_path = "active_rents.png"
-    plt.tight_layout()
-    plt.savefig(img_path, bbox_inches='tight')
+    plt.savefig(img_path, bbox_inches='tight', dpi=200, transparent=False)
     plt.close(fig)
 
-    await message.answer_photo(FSInputFile(img_path), caption="Текущие активные аренды")
+    await message.answer_photo(FSInputFile(img_path), caption="🚴‍♂️ Текущие активные аренды")
 
 @dp.message(F.text == "/help")
 async def help_cmd(message: types.Message):
