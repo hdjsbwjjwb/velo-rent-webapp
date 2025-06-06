@@ -8,6 +8,8 @@ import pytz
 import os
 import re
 import csv
+import pandas as pd
+import matplotlib.pyplot as plt
 from collections import Counter
 
 from dotenv import load_dotenv
@@ -174,6 +176,79 @@ async def greet(message: types.Message):
     }
     keyboard = categories_keyboard()
     await message.answer("Выберите категорию велосипеда для аренды:", reply_markup=keyboard)
+
+@dp.message(F.text == "/active")
+async def active_rents(message: types.Message):
+    if message.from_user.id != ADMIN_ID:
+        await message.answer("Нет доступа.")
+        return
+
+    active = []
+    now = datetime.now(KALININGRAD_TZ)
+
+    for uid, data in user_rent_data.items():
+        if data.get("is_renting"):
+            start_time = data.get("start_time")
+            # Универсально: работаем и со строкой, и с datetime
+            if start_time:
+                if isinstance(start_time, str):
+                    try:
+                        start_time = datetime.fromisoformat(start_time)
+                    except Exception:
+                        # fallback если вдруг был другой формат
+                        start_time = now
+                duration = now - start_time
+                minutes = int(duration.total_seconds() // 60)
+                start_str = start_time.strftime("%H:%M")
+            else:
+                minutes = "-"
+                start_str = "-"
+            # Имя пользователя если есть, иначе "-"
+            user_name = data.get("user_name") or "-"
+            # Телефон
+            phone = data.get("phone") or "-"
+            # Велики (читаемо)
+            cart = data.get("cart", {})
+            if cart:
+                bikes = "\n".join([f"{cat}: {qty}" for cat, qty in cart.items()])
+            else:
+                bikes = "-"
+            active.append({
+                "Имя": user_name,
+                "Телефон": phone,
+                "Велосипеды": bikes,
+                "Старт": start_str,
+                "Длится (мин)": minutes
+            })
+
+    if not active:
+        await message.answer("Нет активных аренд.")
+        return
+
+    import pandas as pd
+    import matplotlib.pyplot as plt
+
+    df = pd.DataFrame(active)
+
+    # Делаем красивую табличку
+    fig, ax = plt.subplots(figsize=(7, 1 + 0.5 * len(df)))
+    ax.axis('off')
+    table = ax.table(
+        cellText=df.values,
+        colLabels=df.columns,
+        loc='center',
+        cellLoc='center'
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(12)
+    table.scale(1, 1.7)
+
+    img_path = "active_rents.png"
+    plt.tight_layout()
+    plt.savefig(img_path, bbox_inches='tight')
+    plt.close(fig)
+
+    await message.answer_photo(FSInputFile(img_path), caption="Текущие активные аренды")
 
 @dp.message(F.text == "/help")
 async def help_cmd(message: types.Message):
