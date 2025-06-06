@@ -205,6 +205,7 @@ async def active_rents(message: types.Message):
             phone = data.get("phone") or "-"
             cart = data.get("cart", {})
             if cart:
+                # Вставляем переносы для длинных строк (по 1 на строку)
                 bikes = "\n".join([f"{cat}: {qty}" for cat, qty in cart.items()])
             else:
                 bikes = "-"
@@ -225,46 +226,47 @@ async def active_rents(message: types.Message):
 
     df = pd.DataFrame(active)
 
-    fig, ax = plt.subplots(figsize=(8, 1.1 + 0.55 * len(df)))
+    # --- Ключевое изменение: увеличиваем высоту строки под количество переносов!
+    row_height = 0.7 + 0.35 * df['Велосипеды'].apply(lambda x: str(x).count('\n')).max()
+    fig_height = max(1.4 + len(df) * row_height, 2.5)
+
+    fig, ax = plt.subplots(figsize=(8.5, fig_height))
     ax.axis('off')
 
-    # Цвета для таблицы
-    header_color = '#ffe066'  # жёлтый (как шеринговые велики)
-    row_colors = ['#f9f9f9', '#eafaf1']  # чередующиеся строки
+    header_color = '#ffe066'
+    row_colors = ['#f9f9f9', '#eafaf1']
     edge_color = '#bdbdbd'
     text_color = '#212529'
 
-    # Рисуем саму таблицу
+    # table
     table = ax.table(
         cellText=df.values,
         colLabels=df.columns,
-        cellLoc='center',
+        cellLoc='left',  # Текст по левому краю — лучше для длинных строк
         loc='center'
     )
 
     table.auto_set_font_size(False)
-    table.set_fontsize(13)
-    table.scale(1, 1.55)
+    table.set_fontsize(12)
+    table.scale(1.12, 1.45)  # ширина, высота
 
     # Красим шапку
     for (row, col), cell in table.get_celld().items():
-        cell.set_linewidth(1.4)
+        cell.set_linewidth(1.3)
         if row == 0:
             cell.set_facecolor(header_color)
-            cell.set_text_props(weight='bold', color=text_color)
+            cell.set_text_props(weight='bold', color=text_color, ha='center', va='center', fontname='Arial')
         elif row % 2 == 1:
             cell.set_facecolor(row_colors[0])
         else:
             cell.set_facecolor(row_colors[1])
         cell.set_edgecolor(edge_color)
-        cell.set_fontsize(13)
-        cell.set_text_props(va='center', ha='center', fontname='Arial')
+        cell.set_text_props(fontname='Arial', wrap=True, ha='left', va='center')
+        # для столбцов кроме шапки — слева текст
 
-    # Можно добавить логотип — просто вставь картинку сверху (если захочешь — скинешь логотип)
-
-    fig.tight_layout(pad=2.5)
+    fig.tight_layout(pad=2.0)
     img_path = "active_rents.png"
-    plt.savefig(img_path, bbox_inches='tight', dpi=200, transparent=False)
+    plt.savefig(img_path, bbox_inches='tight', dpi=210, transparent=False)
     plt.close(fig)
 
     await message.answer_photo(FSInputFile(img_path), caption="🚴‍♂️ Текущие активные аренды")
