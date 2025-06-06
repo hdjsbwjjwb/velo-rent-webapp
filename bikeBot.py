@@ -224,7 +224,7 @@ async def active_rents(message: types.Message):
     # --- PIL рендер таблицы ---
     headers = ["Имя", "Телефон", "Велосипеды", "Старт", "Длится (мин)"]
 
-    font_path = "Thicker-Medium-TRIAL.ttf"  # путь до TTF-файла шрифта
+    font_path = "shobhika_regular.otf"  # путь до TTF-файла шрифта
     try:
         font = ImageFont.truetype(font_path, 28)
         font_bold = ImageFont.truetype(font_path, 32)
