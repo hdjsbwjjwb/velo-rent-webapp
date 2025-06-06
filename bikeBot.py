@@ -9,6 +9,7 @@ import os
 import re
 import csv
 import pandas as pd
+from PIL import Image, ImageDraw, ImageFont
 import matplotlib.pyplot as plt
 from collections import Counter
 
@@ -205,69 +206,77 @@ async def active_rents(message: types.Message):
             phone = data.get("phone") or "-"
             cart = data.get("cart", {})
             if cart:
-                # Вставляем переносы для длинных строк (по 1 на строку)
                 bikes = "\n".join([f"{cat}: {qty}" for cat, qty in cart.items()])
             else:
                 bikes = "-"
-            active.append({
-                "Имя": user_name,
-                "Телефон": phone,
-                "Велосипеды": bikes,
-                "Старт": start_str,
-                "Длится (мин)": minutes
-            })
+            active.append([
+                user_name,
+                phone,
+                bikes,
+                start_str,
+                minutes
+            ])
 
     if not active:
         await message.answer("Нет активных аренд.")
         return
 
-    import pandas as pd
-    import matplotlib.pyplot as plt
+    # --- PIL рендер таблицы ---
+    headers = ["Имя", "Телефон", "Велосипеды", "Старт", "Длится (мин)"]
 
-    df = pd.DataFrame(active)
+    font_path = "arial.ttf"  # путь до TTF-файла шрифта
+    try:
+        font = ImageFont.load_default()
+        font_bold = ImageFont.load_default()
+    except:
+        font = ImageFont.load_default()
+        font_bold = ImageFont.load_default()
 
-    # --- Ключевое изменение: увеличиваем высоту строки под количество переносов!
-    row_height = 0.7 + 0.35 * df['Велосипеды'].apply(lambda x: str(x).count('\n')).max()
-    fig_height = max(1.4 + len(df) * row_height, 2.5)
+    row_height = 56
+    col_widths = [180, 260, 370, 120, 170]  # подгони под свой вкус
 
-    fig, ax = plt.subplots(figsize=(8.5, fig_height))
-    ax.axis('off')
+    # Считаем высоту таблицы (учитывая переносы строк в столбце "Велосипеды")
+    total_height = row_height * (len(active) + 1)
+    for row in active:
+        bike_lines = row[2].count('\n')
+        if bike_lines:
+            total_height += bike_lines * 30  # 30px на каждую доп. строку велосипеда
 
-    header_color = '#ffe066'
-    row_colors = ['#f9f9f9', '#eafaf1']
-    edge_color = '#bdbdbd'
-    text_color = '#212529'
+    total_width = sum(col_widths) + 20
 
-    # table
-    table = ax.table(
-        cellText=df.values,
-        colLabels=df.columns,
-        cellLoc='left',  # Текст по левому краю — лучше для длинных строк
-        loc='center'
-    )
+    img = Image.new('RGB', (total_width, total_height + 30), color='#fff')
+    draw = ImageDraw.Draw(img)
 
-    table.auto_set_font_size(False)
-    table.set_fontsize(12)
-    table.scale(1.12, 1.45)  # ширина, высота
+    # Рисуем шапку
+    x = 10
+    y = 10
+    for i, h in enumerate(headers):
+        draw.rectangle([x, y, x+col_widths[i], y+row_height], fill="#ffe066", outline="#bdbdbd", width=2)
+        draw.text((x+10, y+10), h, font=font_bold, fill="#222")
+        x += col_widths[i]
+    y += row_height
 
-    # Красим шапку
-    for (row, col), cell in table.get_celld().items():
-        cell.set_linewidth(1.3)
-        if row == 0:
-            cell.set_facecolor(header_color)
-            cell.set_text_props(weight='bold', color=text_color, ha='center', va='center', fontname='Arial')
-        elif row % 2 == 1:
-            cell.set_facecolor(row_colors[0])
-        else:
-            cell.set_facecolor(row_colors[1])
-        cell.set_edgecolor(edge_color)
-        cell.set_text_props(fontname='Arial', wrap=True, ha='left', va='center')
-        # для столбцов кроме шапки — слева текст
+    # Рисуем строки
+    for idx, row in enumerate(active):
+        x = 10
+        bike_lines = row[2].split('\n')
+        bike_lines_count = len(bike_lines)
+        bike_cell_height = row_height + (bike_lines_count-1)*30
+        for i, val in enumerate(row):
+            # Цвет полосатый
+            fill = "#f9f9f9" if idx % 2 == 0 else "#eafaf1"
+            draw.rectangle([x, y, x+col_widths[i], y+bike_cell_height], fill=fill, outline="#bdbdbd", width=2)
+            # Велосипеды — многострочный текст
+            if i == 2:
+                for line_idx, line in enumerate(bike_lines):
+                    draw.text((x+10, y+10+line_idx*30), line, font=font, fill="#222")
+            else:
+                draw.text((x+10, y+10), str(val), font=font, fill="#222")
+            x += col_widths[i]
+        y += bike_cell_height
 
-    fig.tight_layout(pad=2.0)
-    img_path = "active_rents.png"
-    plt.savefig(img_path, bbox_inches='tight', dpi=210, transparent=False)
-    plt.close(fig)
+    img_path = "active_rents_pil.png"
+    img.save(img_path)
 
     await message.answer_photo(FSInputFile(img_path), caption="🚴‍♂️ Текущие активные аренды")
 
