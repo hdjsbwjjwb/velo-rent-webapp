@@ -224,10 +224,10 @@ async def active_rents(message: types.Message):
     # --- PIL рендер таблицы ---
     headers = ["Имя", "Телефон", "Велосипеды", "Старт", "Длится (мин)"]
 
-    font_path = "arial.ttf"  # путь до TTF-файла шрифта
+    font_path = "Thicker-Medium-TRIAL.ttf"  # путь до TTF-файла шрифта
     try:
-        font = ImageFont.load_default()
-        font_bold = ImageFont.load_default()
+        font = ImageFont.truetype(font_path, 28)
+        font_bold = ImageFont.truetype(font_path, 32)
     except:
         font = ImageFont.load_default()
         font_bold = ImageFont.load_default()
