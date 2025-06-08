@@ -615,24 +615,16 @@ async def finish_rent(message: types.Message):
     start_time = data["start_time"]
     duration = end_time - start_time
     minutes = int(duration.total_seconds() // 60)
-
-    # Новая логика округления
-    remainder = minutes % 15
-    if remainder < 8:
-        rounded_minutes = (minutes // 15) * 15
-    else:
-        rounded_minutes = ((minutes // 15) + 1) * 15
-    if rounded_minutes == 0:
-        rounded_minutes = 15  # Любая поездка (даже 1 минута) считается как 15 минут
+    rounded_minutes = max(1, minutes)  # хотя бы 1 минута
 
     start_str = start_time.strftime("%H:%M")
     end_str = end_time.strftime("%H:%M")
-    hours_part = rounded_minutes // 60
-    minutes_part = rounded_minutes % 60
-    if hours_part > 0:
+    if rounded_minutes >= 60:
+        hours_part = rounded_minutes // 60
+        minutes_part = rounded_minutes % 60
         ride_time = f"{hours_part} ч {minutes_part} мин"
     else:
-        ride_time = f"{minutes_part} мин"
+        ride_time = f"{rounded_minutes} мин"
     period_str = f"{date.today().isoformat()} {start_str} — {end_str}"
 
     total_price = 0
@@ -645,6 +637,10 @@ async def finish_rent(message: types.Message):
         line = f"{emoji} <b>{cat}</b>: {qty} шт. × {rounded_minutes} мин × {minute_price:.2f}₽ = {price * qty}₽"
         lines.append(line)
         total_price += price * qty
+
+    # --- ОКРУГЛЕНИЕ итоговой суммы вверх до 10 руб. ---
+    if total_price % 10 != 0:
+        total_price = ((total_price // 10) + 1) * 10
 
     # Уведомляем админа
     try:
@@ -661,16 +657,14 @@ async def finish_rent(message: types.Message):
     except Exception as e:
         print(f"Не удалось отправить уведомление админу (конец): {e}")
 
-    # --- Вот ТУТ главный правильный вызов:
     save_rent_to_gsheet({
         "user_id": message.from_user.id,
         "user_name": message.from_user.full_name,
         "phone": data.get("phone"),
         "cart": data.get("cart"),
     }, rounded_minutes, total_price, period_str)
-    # ---
 
-    # Сбросить данные аренды, но оставить телефон (чтобы не спрашивать при следующей аренде)
+    # Сбросить данные аренды, но оставить телефон
     user_rent_data[user_id] = {
         "cart": {},
         "start_time": None,
@@ -686,7 +680,7 @@ async def finish_rent(message: types.Message):
         f"⏰ <b>Вы катались {ride_time} на:</b>\n"
         + "\n".join(lines) +
         "\n━━━━━━━━━━━━━━━━━━━━"
-        f"\n<b>🐝 Общая стоимость: <u>{total_price} руб.</u></b>\n\n"
+        f"\n<b>🐝 Общая стоимость (с округлением): <u>{total_price} руб.</u></b>\n\n"
         "<b>💸 Оплата аренды по СБП</b>\n"
         "Переведите сумму на карту:\n"
         "\n<b>💳 <a href='tel:+79062112940'><code>+7 906 211-29-40</code></a></b>\n"
@@ -696,7 +690,7 @@ async def finish_rent(message: types.Message):
         "<i>После оплаты покажите чек сотруднику или отправьте его в аккаунт поддержки.</i>\n\n"
         "<b>🚴 Хотите взять велосипед снова?</b> Просто выберите категорию ниже 👇",
         reply_markup=keyboard,
-        disable_web_page_preview=True  # чтобы ссылка выглядела аккуратно
+        disable_web_page_preview=True
     )
 
 @dp.message(F.text == "/stats")
