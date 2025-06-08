@@ -595,13 +595,17 @@ async def start_rent_real(message: types.Message):
     except Exception as e:
         print(f"Не удалось отправить уведомление админу (начало): {e}")
 
-    await message.answer(
-        f"Вы арендовали:\n{cart_str}\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
-        f"<b>💸 Стоимость всех велосипедов за 1 час: {total_hour_price} руб.</b>\n\n"
-        "Когда закончите кататься — нажмите 'Завершить аренду'.",
-        reply_markup=keyboard
-    )
+await message.answer_photo(
+    FSInputFile("qr_sbp.png"),
+    caption=(
+        f"⏰ <b>Время проката:</b> {ride_time}\n"
+        f"{''.join([line + chr(10) for line in lines])}"
+        f"💸 <b>К оплате:</b> <code>{total_price} руб.</code>\n"
+        "<b>Для оплаты используйте номер:</b> <code>+7 906 211-29-40</code>\n"
+        "📲 <i>Отсканируйте QR-код или введите номер вручную в приложении банка</i>"
+    ),
+    parse_mode="HTML"
+)
 
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
@@ -614,18 +618,14 @@ async def finish_rent(message: types.Message):
     end_time = datetime.now(KALININGRAD_TZ)
     start_time = data["start_time"]
     duration = end_time - start_time
-    minutes = int(duration.total_seconds() // 60)
-    rounded_minutes = max(1, minutes)  # хотя бы 1 минута
+    rounded_minutes = max(1, int(duration.total_seconds() // 60))
 
-    start_str = start_time.strftime("%H:%M")
-    end_str = end_time.strftime("%H:%M")
     if rounded_minutes >= 60:
         hours_part = rounded_minutes // 60
         minutes_part = rounded_minutes % 60
         ride_time = f"{hours_part} ч {minutes_part} мин"
     else:
         ride_time = f"{rounded_minutes} мин"
-    period_str = f"{date.today().isoformat()} {start_str} — {end_str}"
 
     total_price = 0
     lines = []
@@ -638,9 +638,20 @@ async def finish_rent(message: types.Message):
         lines.append(line)
         total_price += price * qty
 
-    # --- НИКАКОГО округления, клиент платит точную сумму! ---
+    # Отправляем одно финальное сообщение с фото QR и всеми деталями
+    await message.answer_photo(
+        FSInputFile("qr_sbp.png"),
+        caption=(
+            f"⏰ <b>Время проката:</b> {ride_time}\n"
+            f"{''.join([line + chr(10) for line in lines])}"
+            f"💸 <b>К оплате:</b> <code>{total_price} руб.</code>\n"
+            "<b>Для оплаты используйте номер:</b> <code>+7 906 211-29-40</code>\n"
+            "📲 <i>Отсканируйте QR-код или введите номер вручную в приложении банка</i>"
+        ),
+        parse_mode="HTML"
+    )
 
-    # Уведомляем админа
+    # Можно отправить админу уведомление о завершении аренды (если нужно)
     try:
         await bot.send_message(
             ADMIN_ID,
@@ -648,13 +659,15 @@ async def finish_rent(message: types.Message):
             f"User: {message.from_user.full_name}\n"
             f"Телефон: {data['phone'] if data.get('phone') else 'Не указан'}\n"
             f"id: {message.from_user.id}\n"
-            f"Время: {start_str} — {end_str} ({ride_time})\n"
+            f"Время: {start_time.strftime('%H:%M')} — {end_time.strftime('%H:%M')} ({ride_time})\n"
             f"Корзина: {data['cart']}\n"
             f"Стоимость: {total_price} руб."
         )
     except Exception as e:
         print(f"Не удалось отправить уведомление админу (конец): {e}")
 
+    # Сохраняем завершённую аренду (Google Sheets, если реализовано)
+    period_str = f"{date.today().isoformat()} {start_time.strftime('%H:%M')} — {end_time.strftime('%H:%M')}"
     save_rent_to_gsheet({
         "user_id": message.from_user.id,
         "user_name": message.from_user.full_name,
@@ -672,17 +685,6 @@ async def finish_rent(message: types.Message):
         "phone": data.get("phone"),
         "asked_phone": False,
     }
-
-    keyboard = categories_keyboard()
-await message.answer_photo(
-    FSInputFile("images/qr.jpg"),
-    caption=(
-        f"💸 <b>QR-код для оплаты аренды</b>\n"
-        f"<b>Сумма:</b> <code>{total_price} руб.</code>\n"
-        "<b>Номер телефона:</b> <code>+7 906 211-29-40</code>\n"
-        "📲 Просто отсканируйте этот код через приложение банка или введите номер вручную."
-    )
-)
 
 @dp.message(F.text == "/stats")
 async def stats(message: types.Message):
