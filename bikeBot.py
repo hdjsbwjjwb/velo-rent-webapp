@@ -582,15 +582,32 @@ async def start_rent_real(message: types.Message):
     ])
     total_hour_price = sum([bike_categories[cat]['hour'] * qty for cat, qty in data["cart"].items()])
 
-    # --- Подтверждение для пользователя ---
+    # --- КРАСИВОЕ СООБЩЕНИЕ ДЛЯ ПОЛЬЗОВАТЕЛЯ ---
     await message.answer(
-        f"🚴‍♂️ <b>Аренда запущена!</b>\n"
-        f"Вы взяли:\n{cart_str}\n"
-        f"<b>⏰ Время старта:</b> {data['start_time'].strftime('%H:%M')}\n"
-        f"<b>💸 Стоимость за 1 час:</b> {total_hour_price} руб.\n\n"
-        "Чтобы завершить аренду, нажмите кнопку ниже 👇",
+        f"🚴‍♂️ <b>Аренда запущена!</b>  ⏰ <b>{data['start_time'].strftime('%H:%M')}</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        "<b>Вы взяли:</b>\n"
+        f"{cart_str}\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        f"💸 <b>Стоимость за 1 час:</b> <u>{total_hour_price} руб.</u>\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        "Для завершения аренды используйте кнопку ниже 👇",
         reply_markup=keyboard
     )
+
+    # --- Уведомление админу ---
+    try:
+        await bot.send_message(
+            ADMIN_ID,
+            f"НАЧАЛАСЬ АРЕНДА!\n"
+            f"User: {message.from_user.full_name}\n"
+            f"Телефон: {data['phone'] if data['phone'] else 'Не указан'}\n"
+            f"id: {message.from_user.id}\n"
+            f"Время: {data['start_time'].strftime('%H:%M')}\n"
+            f"Корзина:\n{cart_str}"
+        )
+    except Exception as e:
+        print(f"Не удалось отправить уведомление админу (начало): {e}")
 
     # --- Уведомление админу ---
     try:
@@ -619,6 +636,7 @@ async def finish_rent(message: types.Message):
     duration = end_time - start_time
     rounded_minutes = max(1, int(duration.total_seconds() // 60))
 
+    # Время в удобном формате
     if rounded_minutes >= 60:
         hours_part = rounded_minutes // 60
         minutes_part = rounded_minutes % 60
@@ -626,6 +644,7 @@ async def finish_rent(message: types.Message):
     else:
         ride_time = f"{rounded_minutes} мин"
 
+    cart_str = ""
     total_price = 0
     lines = []
     for cat, qty in data["cart"].items():
@@ -637,20 +656,27 @@ async def finish_rent(message: types.Message):
         lines.append(line)
         total_price += price * qty
 
-    # Отправляем одно финальное сообщение с фото QR и всеми деталями
+    cart_str = "\n".join(lines)
+
+    # --- КРАСИВОЕ ФИНАЛЬНОЕ СООБЩЕНИЕ ---
     await message.answer_photo(
-        FSInputFile("images/qr.jpg"),
+        FSInputFile("qr_sbp.png"),
         caption=(
-            f"⏰ <b>Время проката:</b> {ride_time}\n"
-            f"{''.join([line + chr(10) for line in lines])}"
-            f"💸 <b>К оплате:</b> <code>{total_price} руб.</code>\n"
-            "<b>Для оплаты используйте номер:</b> <code>+7 906 211-29-40</code>\n"
+            f"✅ <b>Аренда завершена!</b>  ⏰ <b>{end_time.strftime('%H:%M')}</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            f"<b>Вы катались:</b> {ride_time}\n"
+            f"{cart_str}\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            f"💸 <b>Итого к оплате:</b> <u>{total_price} руб.</u>\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "Для оплаты используйте номер:\n"
+            "<code>+7 906 211-29-40</code>\n"
             "📲 <i>Отсканируйте QR-код или введите номер вручную в приложении банка</i>"
         ),
         parse_mode="HTML"
     )
 
-    # Можно отправить админу уведомление о завершении аренды (если нужно)
+    # --- Уведомление админу ---
     try:
         await bot.send_message(
             ADMIN_ID,
@@ -665,7 +691,7 @@ async def finish_rent(message: types.Message):
     except Exception as e:
         print(f"Не удалось отправить уведомление админу (конец): {e}")
 
-    # Сохраняем завершённую аренду (Google Sheets, если реализовано)
+    # --- Сохраняем завершённую аренду (Google Sheets, если реализовано) ---
     period_str = f"{date.today().isoformat()} {start_time.strftime('%H:%M')} — {end_time.strftime('%H:%M')}"
     save_rent_to_gsheet({
         "user_id": message.from_user.id,
@@ -674,7 +700,7 @@ async def finish_rent(message: types.Message):
         "cart": data.get("cart"),
     }, rounded_minutes, total_price, period_str)
 
-    # Сбросить данные аренды, но оставить телефон
+    # --- Сбросить данные аренды, но оставить телефон ---
     user_rent_data[user_id] = {
         "cart": {},
         "start_time": None,
