@@ -25,12 +25,7 @@ import traceback
 
 from aiologger import Logger
 import sys
-
-import matplotlib.pyplot as plt
-from collections import Counter
 from datetime import date
-import json
-
 async def generate_stats_chart(records, filename='stats_chart.png'):
     from collections import Counter
     import matplotlib.pyplot as plt
@@ -40,19 +35,19 @@ async def generate_stats_chart(records, filename='stats_chart.png'):
     total_income = 0
     total_minutes = 0
 
-for row in records:
-    cart_json = row.get("cart") or row.get("Велосипеды") or "{}"
-    cart = json.loads(cart_json)
-    for cat, qty in cart.items():
-        bikes_counter[cat] += int(qty)
+    for row in records:  # <-- ЦИКЛ ДОЛЖЕН БЫТЬ ВОТ ТУТ!
+        cart_json = row.get("cart") or row.get("Велосипеды") or "{}"
+        cart = json.loads(cart_json)
+        for cat, qty in cart.items():
+            bikes_counter[cat] += int(qty)
 
-    sum_str = str(row.get("total_price", 0) or row.get("Сумма", "0")).replace("₽", "").replace(" ", "").strip()
-    try:
-        total_income += int(sum_str)
-    except Exception:
-        pass
+        sum_str = str(row.get("total_price", 0) or row.get("Сумма", "0")).replace("₽", "").replace(" ", "").strip()
+        try:
+            total_income += int(sum_str)
+        except Exception:
+            pass
 
-    total_minutes += int(row.get("minutes", 0) or row.get("Время проката", 0))
+        total_minutes += int(row.get("minutes", 0) or row.get("Время проката", 0))
 
     if records:
         avg_minutes = total_minutes // len(records)
