@@ -404,6 +404,7 @@ async def admin_report(message: types.Message):
     print(f"TODAY: {today}")
     for row in records:
         print(f"PERIOD: {get_period(row)}")
+        print("INCLUDED:", today in get_period(row))
 
     today_rents = [
         row for row in records
