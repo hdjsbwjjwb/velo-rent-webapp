@@ -710,6 +710,7 @@ async def stats(message: types.Message):
         return
 
     records = get_gsheet_records()
+    print("Получены записи:", records)
     if not records:
         await message.answer("Пока нет данных о прокатах.")
         return
