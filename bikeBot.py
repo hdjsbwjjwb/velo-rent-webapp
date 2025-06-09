@@ -595,18 +595,6 @@ async def start_rent_real(message: types.Message):
     except Exception as e:
         print(f"Не удалось отправить уведомление админу (начало): {e}")
 
-await message.answer_photo(
-    FSInputFile("qr_sbp.png"),
-    caption=(
-        f"⏰ <b>Время проката:</b> {ride_time}\n"
-        f"{''.join([line + chr(10) for line in lines])}"
-        f"💸 <b>К оплате:</b> <code>{total_price} руб.</code>\n"
-        "<b>Для оплаты используйте номер:</b> <code>+7 906 211-29-40</code>\n"
-        "📲 <i>Отсканируйте QR-код или введите номер вручную в приложении банка</i>"
-    ),
-    parse_mode="HTML"
-)
-
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
     user_id = message.from_user.id
@@ -640,7 +628,7 @@ async def finish_rent(message: types.Message):
 
     # Отправляем одно финальное сообщение с фото QR и всеми деталями
     await message.answer_photo(
-        FSInputFile("qr_sbp.png"),
+        FSInputFile("images/qr.jpg"),
         caption=(
             f"⏰ <b>Время проката:</b> {ride_time}\n"
             f"{''.join([line + chr(10) for line in lines])}"
