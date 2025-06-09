@@ -392,19 +392,18 @@ async def admin_report(message: types.Message):
         await message.answer("Нет доступа.")
         return
 
-    IGNORE_PHONES = ["7993734285"]
-
     def get_period(row):
         return row.get("period") or row.get("Период") or ""
 
-    today = date.today().isoformat()  # '2024-06-10'
+    IGNORE_PHONES = ["7993734285"]
+
+    today = date.today().isoformat()
     records = get_gsheet_records()
 
-    # Проверь, что реально пишется:
-    for row in records:
-        print("DEBUG:", row)  # или залогируй через await logger.info(str(row))
-
-    today_rents = [row for row in records if today in get_period(row) and row.get("phone") not in IGNORE_PHONES]
+    today_rents = [
+        row for row in records
+        if today in get_period(row) and str(row.get("phone") or row.get("Телефон") or "") not in IGNORE_PHONES
+    ]
 
     if not today_rents:
         await message.answer("Сегодня прокатов не было.")
