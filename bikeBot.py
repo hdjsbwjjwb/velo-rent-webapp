@@ -916,8 +916,8 @@ async def send_daily_report():
 
 
 async def main():
-  #  await set_user_commands(bot)
-  #  await set_admin_commands(bot, ADMIN_IDS)
+    await set_user_commands(bot)
+    await set_admin_commands(bot, ADMIN_IDS)
     await dp.start_polling(bot)
     
 if __name__ == "__main__":
