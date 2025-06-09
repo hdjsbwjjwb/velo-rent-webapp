@@ -35,7 +35,7 @@ async def generate_stats_chart(records, filename='stats_chart.png'):
     total_income = 0
     total_minutes = 0
 
-    for row in records:  # <-- ЦИКЛ ДОЛЖЕН БЫТЬ ВОТ ТУТ!
+    for row in records:
         cart_json = row.get("cart") or row.get("Велосипеды") or "{}"
         cart = json.loads(cart_json)
         for cat, qty in cart.items():
@@ -55,41 +55,26 @@ async def generate_stats_chart(records, filename='stats_chart.png'):
         avg_minutes = 0
 
     plt.figure(figsize=(12, 6))
-
-    # Первый столбчатый график: популярность велосипедов
+    # --- график 1 ---
     plt.subplot(1, 2, 1)
     bars1 = plt.bar(bikes_counter.keys(), bikes_counter.values(), color='skyblue')
     plt.title('Популярность велосипедов')
     plt.ylabel('Количество аренд')
-    
-    # --- Подписи количества на каждом столбике ---
     for bar in bars1:
         height = bar.get_height()
-        plt.text(
-            bar.get_x() + bar.get_width() / 2,
-            height,
-            f"{int(height)}",
-            ha='center', va='bottom', fontsize=12, fontweight='bold'
-        )
-    
-    # Второй столбчатый график: выручка и среднее время
-    plt.subplot(1, 2, 2)
-    bars2 = plt.bar(['Выручка', 'Среднее время аренды (мин)'],
-                    [total_income, avg_minutes], color=['lightgreen', 'salmon'])
-    plt.title('Выручка и среднее время')
-    
-    # --- Подписи сумм и времени на каждом столбике ---
-    for bar, value in zip(bars2, [total_income, avg_minutes]):
-        plt.text(
-            bar.get_x() + bar.get_width() / 2,
-            bar.get_height(),
-            f"{value:,}".replace(',', ' '),
-            ha='center', va='bottom', fontsize=12, fontweight='bold'
-        )
+        plt.text(bar.get_x() + bar.get_width() / 2, height, f"{int(height)}", ha='center', va='bottom', fontsize=12, fontweight='bold')
 
-plt.tight_layout()
-plt.savefig(filename)
-plt.close()
+    # --- график 2 ---
+    plt.subplot(1, 2, 2)
+    bars2 = plt.bar(['Выручка', 'Среднее время аренды (мин)'], [total_income, avg_minutes], color=['lightgreen', 'salmon'])
+    plt.title('Выручка и среднее время')
+    for bar, value in zip(bars2, [total_income, avg_minutes]):
+        plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), f"{value:,}".replace(',', ' '), ha='center', va='bottom', fontsize=12, fontweight='bold')
+
+    plt.tight_layout()
+    plt.savefig(filename)
+    plt.close()
+
 
 
 logger = Logger.with_default_handlers(name='bike_bot', level='INFO')
