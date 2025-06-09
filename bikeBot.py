@@ -740,7 +740,9 @@ async def stats(message: types.Message):
         f"Общая выручка: <b>{total_income} руб.</b>\n"
         f"Среднее время аренды: <b>{avg_minutes} мин</b>"
     )
-
+except Exception:
+    traceback.print_exc()
+     await message.answer("Произошла ошибка в stats! Проверь консоль/логи.")
 
     
 # --- Показываем время аренды, если аренда активна --- #
