@@ -732,7 +732,9 @@ async def finish_rent(message: types.Message):
         total_price += price * qty
 
     cart_str = "\n".join(lines)
-
+    
+    await logger.info(f"Аренда завершена: {message.from_user.full_name}, id: {user_id}, время: {ride_time}, сумма: {total_price} руб.")
+   
     # --- КРАСИВОЕ ФИНАЛЬНОЕ СООБЩЕНИЕ ---
     await message.answer_photo(
         FSInputFile("images/qr.jpg"),
@@ -764,6 +766,7 @@ async def finish_rent(message: types.Message):
             f"Стоимость: {total_price} руб."
         )
     except Exception as e:
+        await logger.error(f"Ошибка отправки уведомления админу при начале аренды: {e}")
         print(f"Не удалось отправить уведомление админу (конец): {e}")
 
     # --- Сохраняем завершённую аренду (Google Sheets, если реализовано) ---
@@ -786,7 +789,6 @@ async def finish_rent(message: types.Message):
         "asked_phone": False,
     }
     
-    await logger.info(f"Аренда завершена: {message.from_user.full_name}, id: {user_id}, время: {ride_time}, сумма: {total_price} руб.")
     keyboard = categories_keyboard()
     await message.answer(
     "Аренда завершена! Можете выбрать велосипеды для новой аренды:",
