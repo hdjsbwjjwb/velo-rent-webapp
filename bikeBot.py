@@ -68,10 +68,6 @@ def get_gsheet_records():
     return records
 
 ADMIN_ID = [6425885445, 5012960110] # <-- сюда свой user_id
-
-if message.from_user.id not in ADMIN_ID:
-    await message.answer("Нет доступа.")
-    return
     
 SUPPORT_TEXT = (
     "💬 <b>📞   BalticBike</b>\n\n"
@@ -351,7 +347,7 @@ async def restart_bot(message: types.Message):
 
 @dp.message(F.text == "/report")
 async def admin_report(message: types.Message):
-    if message.from_user.id != ADMIN_ID:
+    if message.from_user.id not in ADMIN_ID:
         await message.answer("Нет доступа.")
         return
 
@@ -795,7 +791,7 @@ async def finish_rent(message: types.Message):
 
 @dp.message(F.text == "/stats")
 async def stats(message: types.Message):
-    if message.from_user.id != ADMIN_ID:
+    if message.from_user.id not in ADMIN_ID:
         await message.answer("Нет доступа.")
         return
 
