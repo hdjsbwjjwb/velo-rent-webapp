@@ -569,6 +569,7 @@ async def handle_contact(message: types.Message):
         print(f"Ошибка при записи в Google Таблицу: {e}")
         await message.answer(f"Ошибка при запуске аренды: {e}")
         print("Ошибка при запуске аренды:", e)
+
 async def start_rent_real(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data[user_id]
@@ -576,12 +577,22 @@ async def start_rent_real(message: types.Message):
     data["is_renting"] = True
     keyboard = during_rent_keyboard()
     cart_str = "\n".join([
-        f"{bike_categories[cat]['emoji']} <b>{cat}</b>: {cnt} шт. ({bike_categories[cat]['hour']}₽/ч)"
-        for cat, cnt in data["cart"].items()
+        f"{bike_categories[cat]['emoji']} <b>{cat}</b>: {qty} шт. ({bike_categories[cat]['hour']}₽/ч)"
+        for cat, qty in data["cart"].items()
     ])
-
     total_hour_price = sum([bike_categories[cat]['hour'] * qty for cat, qty in data["cart"].items()])
 
+    # --- Подтверждение для пользователя ---
+    await message.answer(
+        f"🚴‍♂️ <b>Аренда запущена!</b>\n"
+        f"Вы взяли:\n{cart_str}\n"
+        f"<b>⏰ Время старта:</b> {data['start_time'].strftime('%H:%M')}\n"
+        f"<b>💸 Стоимость за 1 час:</b> {total_hour_price} руб.\n\n"
+        "Чтобы завершить аренду, нажмите кнопку ниже 👇",
+        reply_markup=keyboard
+    )
+
+    # --- Уведомление админу ---
     try:
         await bot.send_message(
             ADMIN_ID,
@@ -589,7 +600,7 @@ async def start_rent_real(message: types.Message):
             f"User: {message.from_user.full_name}\n"
             f"Телефон: {data['phone'] if data['phone'] else 'Не указан'}\n"
             f"id: {message.from_user.id}\n"
-            f"Время: {datetime.now(KALININGRAD_TZ).strftime('%H:%M')}\n"
+            f"Время: {data['start_time'].strftime('%H:%M')}\n"
             f"Корзина:\n{cart_str}"
         )
     except Exception as e:
