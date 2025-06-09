@@ -23,7 +23,12 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 import traceback
 
-def save_rent_to_gsheet(data, duration_min, total_price, period_str):
+from aiologger import Logger
+import sys
+
+logger = Logger.with_default_handlers(name='bike_bot', level='INFO')
+
+async def save_rent_to_gsheet(data, duration_min, total_price, period_str):
     print("save_rent_to_gsheet вызвана")
     try:
         scope = [
@@ -49,7 +54,7 @@ def save_rent_to_gsheet(data, duration_min, total_price, period_str):
         ])
         print("✅ Успешно добавлено в Google Таблицу")
     except Exception as e:
-        print("Ошибка при записи в Google Таблицу:")
+        await logger.error(f"Ошибка записи в Google таблицу: {e}")
         traceback.print_exc()
         with open("gspread_error.log", "a") as f:
             f.write(f"{datetime.now()} — Ошибка:\n")
@@ -658,6 +663,8 @@ async def start_rent_real(message: types.Message):
     data["start_time"] = datetime.now(KALININGRAD_TZ)
     data["is_renting"] = True
     keyboard = during_rent_keyboard()
+    await logger.info(f"Аренда началась: {message.from_user.full_name}, id: {user_id}, телефон: {data.get('phone')}")
+
     cart_str = "\n".join([
         f"{bike_categories[cat]['emoji']} <b>{cat}</b>: {qty} шт. ({bike_categories[cat]['hour']}₽/ч)"
         for cat, qty in data["cart"].items()
@@ -779,6 +786,7 @@ async def finish_rent(message: types.Message):
         "asked_phone": False,
     }
     
+    await logger.info(f"Аренда завершена: {message.from_user.full_name}, id: {user_id}, время: {ride_time}, сумма: {total_price} руб.")
     keyboard = categories_keyboard()
     await message.answer(
     "Аренда завершена! Можете выбрать велосипеды для новой аренды:",
