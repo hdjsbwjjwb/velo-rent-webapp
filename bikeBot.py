@@ -609,20 +609,6 @@ async def start_rent_real(message: types.Message):
     except Exception as e:
         print(f"Не удалось отправить уведомление админу (начало): {e}")
 
-    # --- Уведомление админу ---
-    try:
-        await bot.send_message(
-            ADMIN_ID,
-            f"НАЧАЛАСЬ АРЕНДА!\n"
-            f"User: {message.from_user.full_name}\n"
-            f"Телефон: {data['phone'] if data['phone'] else 'Не указан'}\n"
-            f"id: {message.from_user.id}\n"
-            f"Время: {data['start_time'].strftime('%H:%M')}\n"
-            f"Корзина:\n{cart_str}"
-        )
-    except Exception as e:
-        print(f"Не удалось отправить уведомление админу (начало): {e}")
-
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
     user_id = message.from_user.id
@@ -669,9 +655,8 @@ async def finish_rent(message: types.Message):
             "━━━━━━━━━━━━━━━━━━━━\n"
             f"💸 <b>Итого к оплате:</b> <u>{total_price} руб.</u>\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
-            "Для оплаты используйте номер:\n"
-            "<code>+7 906 211-29-40</code>\n"
             "📲 <i>Отсканируйте QR-код или введите номер вручную в приложении банка</i>"
+            "<code>+7 906 211-29-40</code>\n"
         ),
         parse_mode="HTML"
     )
