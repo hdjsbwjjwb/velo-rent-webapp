@@ -717,44 +717,28 @@ async def finish_rent(message: types.Message):
 @dp.message(F.text == "/stats")
 async def stats(message: types.Message):
     if message.from_user.id != ADMIN_ID:
-        print("Вызван /stats")
         await message.answer("Нет доступа.")
         return
 
     records = get_gsheet_records()
-    print("Получены записи:", records)
-    if not records:
-        await message.answer("Пока нет данных о прокатах.")
-        return
+    print("records:", records)  # <--- посмотри структуру записей!
 
     bikes_counter = Counter()
     total_income = 0
     total_minutes = 0
 
     for row in records:
+        print("row:", row)  # <--- выведет каждую строку
         try:
             cart = json.loads(row["cart"])
-        except Exception:
+        except Exception as e:
+            print("Ошибка при json.loads(cart):", e)
             cart = {}
         for cat, qty in cart.items():
+            print(f"Категория: {cat}, Кол-во: {qty}")  # <--- вывод для отладки
             bikes_counter[cat] += int(qty)
         total_income += int(row.get("total_price", 0))
         total_minutes += int(row.get("minutes", 0))
-
-    total_rents = len(records)
-    total_bikes = sum(bikes_counter.values())
-    most_popular = bikes_counter.most_common(1)
-    popular_bike = most_popular[0][0] if most_popular else "Нет данных"
-    avg_minutes = total_minutes // total_rents if total_rents else 0
-
-    await message.answer(
-        f"📊 <b>Статистика проката</b>\n"
-        f"Всего завершённых прокатов: <b>{total_rents}</b>\n"
-        f"Всего велосипедов взято: <b>{total_bikes}</b>\n"
-        f"Самый популярный велик: <b>{popular_bike}</b>\n"
-        f"Общая выручка: <b>{total_income} руб.</b>\n"
-        f"Среднее время аренды: <b>{avg_minutes} мин</b>"
-    )
 
     
 # --- Показываем время аренды, если аренда активна --- #
