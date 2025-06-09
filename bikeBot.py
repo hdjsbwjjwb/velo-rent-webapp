@@ -67,7 +67,7 @@ def get_gsheet_records():
     records = sheet.get_all_records()
     return records
 
-ADMIN_ID = 6425885445  # <-- сюда свой user_id
+ADMIN_ID = [6425885445, 5012960110] # <-- сюда свой user_id
 
 SUPPORT_TEXT = (
     "💬 <b>📞   BalticBike</b>\n\n"
@@ -94,6 +94,26 @@ bot = Bot(
     default=DefaultBotProperties(parse_mode="HTML")
 )
 dp = Dispatcher()
+
+async def set_user_commands(bot):
+    commands = [
+        types.BotCommand(command="start", description="Запустить бота"),
+        types.BotCommand(command="help", description="Справка"),
+        # Только публичные команды!
+    ]
+    await bot.set_my_commands(commands, scope=types.BotCommandScopeDefault())
+
+async def set_admin_commands(bot, admin_id):
+    commands = [
+        types.BotCommand(command="start", description="Запустить бота"),
+        types.BotCommand(command="help", description="Справка"),
+        types.BotCommand(command="stats", description="Статистика (для админа)"),
+        types.BotCommand(command="report", description="Отчёт за сегодня"),
+        types.BotCommand(command="active", description="Активные аренды"),
+        # другие админ-команды если есть
+    ]
+    scope = types.BotCommandScopeChat(admin_id)
+    await bot.set_my_commands(commands, scope=scope)
 
 # -------- Клавиатуры -------- #
 
@@ -886,6 +906,8 @@ async def send_daily_report():
 
 
 async def main():
+    await set_user_commands(bot)
+    await set_admin_commands(bot, ADMIN_ID)
     await dp.start_polling(bot)
     
 if __name__ == "__main__":
