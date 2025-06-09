@@ -730,7 +730,7 @@ async def finish_rent(message: types.Message):
     await message.answer_photo(
         FSInputFile("images/qr.jpg"),
         caption=(
-            f"<b>Аренда закончилась</b>  ⏰ <b>{end_time.strftime('%H:%M')}</b>\n"
+            f"<b>Аренда закончилась</b>\n"
             f"\n"
             f"Вы катались: <u>{ride_time}</u>\n"
             f"\n"
@@ -740,7 +740,6 @@ async def finish_rent(message: types.Message):
             "<code>+7 906 211-29-40</code>\n"
             "━━━━━━━━━━━━━━━━\n"
             f"💰 <b>Итого к оплате:</b> <u>{total_price} руб.</u> 💰\n"
-            "━━━━━━━━━━━━━━━━\n"
         ),
         parse_mode="HTML"
     )
