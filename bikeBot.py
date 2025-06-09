@@ -70,8 +70,7 @@ PHONE_NUMBER = "+7 906 211-29-40"  # <-- номер для оплаты
 bike_categories = {
     'Детский':     {"hour": 150, "emoji": "🧒", "img": "images/Baby.jpg"},
     'Прогулочный': {"hour": 200, "emoji": "🚲", "img": "images/City.jpg"},
-    'Спортивный':  {"hour": 250, "emoji": "🚵", "img": "images/Sport.jpg"},
-    'Фэтбайк':     {"hour": 300, "emoji": "🌄", "img": "images/Fat.jpg"},
+    'Скоростной':  {"hour": 250, "emoji": "🚵", "img": "images/Sport.jpg"},
 }
 
 QUANTITY_CHOICES = [1, 2, 3, 4, 5]
@@ -99,14 +98,16 @@ def categories_keyboard():
         keyboard=[
             [
                 types.KeyboardButton(
-                    text=f"{bike_categories[cat]['emoji']} {cat} ({bike_categories[cat]['hour']}₽/ч)"
+                    text=(
+                        f"{bike_categories[cat]['emoji']} {cat} "
+                        f"({(bike_categories[cat]['hour'] / 60):.2f}₽/мин)"
+                    )
                 )
             ] for cat in bike_categories.keys()
         ] +
         [
-            [types.KeyboardButton(text="Посмотреть корзину")],
-            [types.KeyboardButton(text="Начать аренду 🚴🚴🚴...")],
-            [types.KeyboardButton(text="Перезапустить бот"), types.KeyboardButton(text="📞 Поддержка")]
+            [types.KeyboardButton(text="🟢 НАЧАТЬ АРЕНДУ 🚴🚴🚴...")],
+            [types.KeyboardButton(text="Посмотреть корзину")]
         ],
         resize_keyboard=True
     )
@@ -492,7 +493,7 @@ async def clear_cart(message: types.Message):
     await message.answer("Корзина очищена! Можете выбрать велосипеды снова.", reply_markup=keyboard)
 
 
-@dp.message(F.text == "Начать аренду 🚴🚴🚴...")
+@dp.message(F.text == "🟢 НАЧАТЬ АРЕНДУ 🚴🚴🚴...")
 async def start_rent_preview(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
