@@ -41,13 +41,18 @@ async def generate_stats_chart(records, filename='stats_chart.png'):
     total_minutes = 0
 
     for row in records:
-        cart_json = row.get("cart") or row.get("Велосипеды") or "{}"
-        cart = json.loads(cart_json)
-        for cat, qty in cart.items():
-            bikes_counter[cat] += int(qty)
+    cart_json = row.get("cart") or row.get("Велосипеды") or "{}"
+    cart = json.loads(cart_json)
+    for cat, qty in cart.items():
+        bikes_counter[cat] += int(qty)
 
-        total_income += int(row.get("total_price", 0) or row.get("Сумма", "0").replace("₽", "").strip() or 0)
-        total_minutes += int(row.get("minutes", 0) or row.get("Время проката", 0))
+    sum_str = str(row.get("total_price", 0) or row.get("Сумма", "0")).replace("₽", "").replace(" ", "").strip()
+    try:
+        total_income += int(sum_str)
+    except Exception:
+        pass
+
+    total_minutes += int(row.get("minutes", 0) or row.get("Время проката", 0))
 
     if records:
         avg_minutes = total_minutes // len(records)
