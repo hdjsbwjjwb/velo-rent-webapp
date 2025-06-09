@@ -40,7 +40,7 @@ async def generate_stats_chart(records, filename='stats_chart.png'):
     total_income = 0
     total_minutes = 0
 
-    for row in records:
+for row in records:
     cart_json = row.get("cart") or row.get("Велосипеды") or "{}"
     cart = json.loads(cart_json)
     for cat, qty in cart.items():
