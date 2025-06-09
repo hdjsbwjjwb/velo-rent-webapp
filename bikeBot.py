@@ -163,7 +163,7 @@ def during_rent_keyboard():
 
 def contact_keyboard():
     return types.ReplyKeyboardMarkup(
-        keyboard=[[types.KeyboardButton(text="Отправить номер телефона", request_contact=True)]],
+        keyboard=[[types.KeyboardButton(text="✅ Отправить номер телефона ✅", request_contact=True)]],
         resize_keyboard=True
     )
 
