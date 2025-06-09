@@ -112,7 +112,7 @@ async def set_admin_commands(bot, admin_ids):
         types.BotCommand(command="active", description="Активные аренды"),
         # другие админ-команды если есть
     ]
- for admin_id in admin_ids:
+    for admin_id in admin_ids:
         scope = types.BotCommandScopeChat(chat_id=admin_id)
         await bot.set_my_commands(commands, scope=scope)
 
