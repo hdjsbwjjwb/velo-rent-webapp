@@ -720,17 +720,23 @@ async def stats(message: types.Message):
         await message.answer("Нет доступа.")
         return
 
+    IGNORE_PHONES = ["79937342853"]  # Сюда можно добавить ещё номера через запятую
+
     records = get_gsheet_records()
     bikes_counter = Counter()
     total_income = 0
     total_minutes = 0
+    total_rents = 0  # Считаем только валидные
 
     for row in records:
+        phone = str(row.get("phone") or row.get("Телефон") or "")
+        if phone in IGNORE_PHONES:
+            continue  # Пропускаем запись
+
         cart_json = row.get("cart") or row.get("Велосипеды") or "{}"
         try:
             cart = json.loads(cart_json)
-        except Exception as e:
-            print("Ошибка при json.loads(cart):", e)
+        except Exception:
             cart = {}
         for cat, qty in cart.items():
             bikes_counter[cat] += int(qty)
@@ -740,7 +746,8 @@ async def stats(message: types.Message):
         except Exception:
             pass
 
-    total_rents = len(records)
+        total_rents += 1
+
     total_bikes = sum(bikes_counter.values())
     most_popular = bikes_counter.most_common(1)
     popular_bike = most_popular[0][0] if most_popular else "Нет данных"
@@ -754,6 +761,7 @@ async def stats(message: types.Message):
         f"Общая выручка: <b>{total_income} руб.</b>\n"
         f"Среднее время аренды: <b>{avg_minutes} мин</b>"
     )
+
 
 # --- Показываем время аренды, если аренда активна --- #
 @dp.message(lambda m: m.from_user.id in user_rent_data and user_rent_data[m.from_user.id].get("is_renting"))
