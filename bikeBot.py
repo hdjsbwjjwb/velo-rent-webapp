@@ -55,6 +55,18 @@ def save_rent_to_gsheet(data, duration_min, total_price, period_str):
             f.write(f"{datetime.now()} — Ошибка:\n")
             traceback.print_exc(file=f)
 
+def get_gsheet_records():
+    scope = [
+        "https://spreadsheets.google.com/feeds",
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
+    creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+    client = gspread.authorize(creds)
+    sheet = client.open_by_key("1dXcmUr0Dtx1fylu3DaUdZigFwkjTKnPCkPf9OcuiGOE").sheet1
+    records = sheet.get_all_records()
+    return records
+
 ADMIN_ID = 6425885445  # <-- сюда свой user_id
 
 SUPPORT_TEXT = (
