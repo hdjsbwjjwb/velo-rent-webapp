@@ -316,6 +316,7 @@ async def restart_bot(message: types.Message):
 @dp.message(F.text == "/report")
 async def admin_report(message: types.Message):
     if message.from_user.id != ADMIN_ID:
+        print("Вызван /report")
         await message.answer("Нет доступа.")
         return
     await send_daily_report()
@@ -704,6 +705,7 @@ async def finish_rent(message: types.Message):
 @dp.message(F.text == "/stats")
 async def stats(message: types.Message):
     if message.from_user.id != ADMIN_ID:
+        print("Вызван /stats")
         await message.answer("Нет доступа.")
         return
 
