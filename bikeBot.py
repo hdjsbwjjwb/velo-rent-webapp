@@ -98,10 +98,7 @@ def categories_keyboard():
         keyboard=[
             [
                 types.KeyboardButton(
-                    text=(
-                        f"{bike_categories[cat]['emoji']} {cat} "
-                        f"({(bike_categories[cat]['hour'] / 60):.2f}₽/мин)"
-                    )
+                    text=f"{bike_categories[cat]['emoji']} {cat} ({bike_categories[cat]['hour']}₽/ч)"
                 )
             ] for cat in bike_categories.keys()
         ] +
