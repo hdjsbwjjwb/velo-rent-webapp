@@ -26,6 +26,45 @@ import traceback
 from aiologger import Logger
 import sys
 
+import matplotlib.pyplot as plt
+from collections import Counter
+from datetime import date
+import json
+
+async def generate_stats_chart(records, filename='stats_chart.png'):
+    # Считаем статистику
+    bikes_counter = Counter()
+    total_income = 0
+    total_minutes = 0
+
+    for row in records:
+        cart_json = row.get("cart") or "{}"
+        cart = json.loads(cart_json)
+        for cat, qty in cart.items():
+            bikes_counter[cat] += int(qty)
+
+        total_income += int(row.get("total_price", 0))
+        total_minutes += int(row.get("minutes", 0))
+
+    # Создаём фигуру с графиками
+    plt.figure(figsize=(12, 6))
+
+    # Первый график — популярность велосипедов
+    plt.subplot(1, 2, 1)
+    plt.bar(bikes_counter.keys(), bikes_counter.values(), color='skyblue')
+    plt.title('Популярность велосипедов')
+    plt.ylabel('Количество аренд')
+
+    # Второй график — общая выручка и среднее время
+    plt.subplot(1, 2, 2)
+    plt.bar(['Выручка', 'Среднее время аренды (мин)'], 
+            [total_income, total_minutes // len(records)], color=['lightgreen', 'salmon'])
+    plt.title('Выручка и среднее время')
+
+    plt.tight_layout()
+    plt.savefig(filename)
+    plt.close()
+
 logger = Logger.with_default_handlers(name='bike_bot', level='INFO')
 
 async def save_rent_to_gsheet(data, duration_min, total_price, period_str):
@@ -352,64 +391,25 @@ async def admin_report(message: types.Message):
     if message.from_user.id != ADMIN_ID:
         await message.answer("Нет доступа.")
         return
-    
-    IGNORE_PHONES = ["7993734285"]
 
-    from datetime import date
+    IGNORE_PHONES = ["7993734285"]
+    today = date.today().isoformat()
 
     records = get_gsheet_records()
-    today = date.today().isoformat()  # YYYY-MM-DD
-
-    # Сначала ищем правильный столбец периода
-    def get_period(row):
-        return row.get("period") or row.get("Период") or ""
-
-    today_rents = []
-    for row in records:
-        phone = str(row.get("phone") or row.get("Телефон") or "")
-        if phone in IGNORE_PHONES:
-            continue
-        period = get_period(row)
-        if today in period:  # Проверяем, есть ли дата сегодняшнего дня в периоде
-            today_rents.append(row)
+    today_rents = [row for row in records if today in (row.get("period") or "") and row.get("phone") not in IGNORE_PHONES]
 
     if not today_rents:
         await message.answer("Сегодня прокатов не было.")
         return
 
-    bikes_counter = Counter()
-    total_income = 0
-    total_minutes = 0
-    total_bikes = 0
+    # Генерируем график статистики
+    await generate_stats_chart(today_rents, filename='daily_stats.png')
 
-    for row in today_rents:
-        cart_json = row.get("cart") or row.get("Велосипеды") or "{}"
-        try:
-            cart = json.loads(cart_json)
-        except Exception:
-            cart = {}
-        for cat, qty in cart.items():
-            bikes_counter[cat] += int(qty)
-            total_bikes += int(qty)
-        try:
-            total_income += int(str(row.get("total_price") or row.get("Сумма", "0")).replace("₽", "").replace(" ", ""))
-            total_minutes += int(row.get("minutes") or row.get("Время проката") or 0)
-        except Exception:
-            pass
-
-    most_popular = bikes_counter.most_common(1)
-    popular_bike = most_popular[0][0] if most_popular else "Нет данных"
-    avg_minutes = total_minutes // len(today_rents) if today_rents else 0
-
-    text = (
-        f"📅 <b>Отчёт за {today}</b>\n"
-        f"Прокатов: <b>{len(today_rents)}</b>\n"
-        f"Всего велосипедов выдали: <b>{total_bikes}</b>\n"
-        f"Самый популярный велик: <b>{popular_bike}</b>\n"
-        f"Выручка за день: <b>{total_income} руб.</b>\n"
-        f"Среднее время аренды: <b>{avg_minutes} мин</b>"
+    # Отправляем график админу
+    await message.answer_photo(
+        FSInputFile('daily_stats.png'),
+        caption=f"📊 Отчёт за сегодня ({today})"
     )
-    await message.answer(text)
 
 @dp.message(F.text == "📞 Поддержка")
 async def support(message: types.Message):
