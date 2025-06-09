@@ -660,7 +660,7 @@ async def finish_rent(message: types.Message):
 
     # --- КРАСИВОЕ ФИНАЛЬНОЕ СООБЩЕНИЕ ---
     await message.answer_photo(
-        FSInputFile("qr_sbp.png"),
+        FSInputFile("images/qr.jpg"),
         caption=(
             f"✅ <b>Аренда завершена!</b>  ⏰ <b>{end_time.strftime('%H:%M')}</b>\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
