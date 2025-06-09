@@ -771,7 +771,7 @@ async def finish_rent(message: types.Message):
 
     # --- Сохраняем завершённую аренду (Google Sheets, если реализовано) ---
     period_str = f"{date.today().isoformat()} {start_time.strftime('%H:%M')} — {end_time.strftime('%H:%M')}"
-    save_rent_to_gsheet({
+    await save_rent_to_gsheet({
         "user_id": message.from_user.id,
         "user_name": message.from_user.full_name,
         "phone": data.get("phone"),
