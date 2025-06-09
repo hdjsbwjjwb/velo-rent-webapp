@@ -868,6 +868,7 @@ async def status_time_active(message: types.Message):
 # --- Общий обработчик на случайный текст --- #
 @dp.message()
 async def fallback(message: types.Message):
+    await logger.warning(f"Неизвестное сообщение от {message.from_user.full_name} (id: {message.from_user.id}): {message.text}")
     await message.answer(
         "Пожалуйста, пользуйтесь кнопками ниже 👇\n"
         "Так оформление пройдёт быстрее и без ошибок!"
