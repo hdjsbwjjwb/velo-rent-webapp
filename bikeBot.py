@@ -707,17 +707,16 @@ async def stats(message: types.Message):
         await message.answer("Нет доступа.")
         return
 
-    try:
-    except FileNotFoundError:
+    records = get_gsheet_records()
+    if not records:
         await message.answer("Пока нет данных о прокатах.")
         return
 
-    total_rents = len(reader)
     bikes_counter = Counter()
     total_income = 0
     total_minutes = 0
 
-    for row in reader:
+    for row in records:
         try:
             cart = json.loads(row["cart"])
         except Exception:
@@ -727,6 +726,7 @@ async def stats(message: types.Message):
         total_income += int(row.get("total_price", 0))
         total_minutes += int(row.get("minutes", 0))
 
+    total_rents = len(records)
     total_bikes = sum(bikes_counter.values())
     most_popular = bikes_counter.most_common(1)
     popular_bike = most_popular[0][0] if most_popular else "Нет данных"
