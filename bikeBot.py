@@ -395,10 +395,15 @@ async def admin_report(message: types.Message):
     def get_period(row):
         return row.get("period") or row.get("Период") or ""
 
-    IGNORE_PHONES = ["7993734285"]
+    IGNORE_PHONES = ["7993734285"]  # твой игнор-лист
 
-    today = date.today().isoformat()
+    today = date.today().isoformat()  # '2025-06-09'
     records = get_gsheet_records()
+
+    # Для отладки выводим today и все периоды
+    print(f"TODAY: {today}")
+    for row in records:
+        print(f"PERIOD: {get_period(row)}")
 
     today_rents = [
         row for row in records
@@ -414,6 +419,7 @@ async def admin_report(message: types.Message):
         FSInputFile('daily_stats.png'),
         caption=f"📊 Отчёт за сегодня ({today})"
     )
+
 
 @dp.message(F.text == "📞 Поддержка")
 async def support(message: types.Message):
