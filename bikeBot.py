@@ -232,7 +232,7 @@ async def active_rents(message: types.Message):
         return
 
     # --- PIL рендер таблицы ---
-    headers = ["Имя", "Телефон", "Велосипеды", "Старт", "Длится (мин)"]
+    headers = ["Имя", "Телефон", "Велосипеды", "Старт", "Время"]
 
     font_path = "shobhika_regular.otf"  # путь до TTF-файла шрифта
     try:
@@ -328,11 +328,66 @@ async def restart_bot(message: types.Message):
 @dp.message(F.text == "/report")
 async def admin_report(message: types.Message):
     if message.from_user.id != ADMIN_ID:
-        print("Вызван /report")
         await message.answer("Нет доступа.")
         return
-    await send_daily_report()
-    await message.answer("Отчёт отправлен.")
+
+    IGNORE_PHONES = ["79937342853"]
+
+    from datetime import date
+
+    records = get_gsheet_records()
+    today = date.today().isoformat()  # YYYY-MM-DD
+
+    # Сначала ищем правильный столбец периода
+    def get_period(row):
+        return row.get("period") or row.get("Период") or ""
+
+    today_rents = []
+    for row in records:
+        phone = str(row.get("phone") or row.get("Телефон") or "")
+        if phone in IGNORE_PHONES:
+            continue
+        period = get_period(row)
+        if today in period:  # Проверяем, есть ли дата сегодняшнего дня в периоде
+            today_rents.append(row)
+
+    if not today_rents:
+        await message.answer("Сегодня прокатов не было.")
+        return
+
+    bikes_counter = Counter()
+    total_income = 0
+    total_minutes = 0
+    total_bikes = 0
+
+    for row in today_rents:
+        cart_json = row.get("cart") or row.get("Велосипеды") or "{}"
+        try:
+            cart = json.loads(cart_json)
+        except Exception:
+            cart = {}
+        for cat, qty in cart.items():
+            bikes_counter[cat] += int(qty)
+            total_bikes += int(qty)
+        try:
+            total_income += int(str(row.get("total_price") or row.get("Сумма", "0")).replace("₽", "").replace(" ", ""))
+            total_minutes += int(row.get("minutes") or row.get("Время проката") or 0)
+        except Exception:
+            pass
+
+    most_popular = bikes_counter.most_common(1)
+    popular_bike = most_popular[0][0] if most_popular else "Нет данных"
+    avg_minutes = total_minutes // len(today_rents) if today_rents else 0
+
+    text = (
+        f"📅 <b>Отчёт за {today}</b>\n"
+        f"Прокатов: <b>{len(today_rents)}</b>\n"
+        f"Всего велосипедов выдали: <b>{total_bikes}</b>\n"
+        f"Самый популярный велик: <b>{popular_bike}</b>\n"
+        f"Выручка за день: <b>{total_income} руб.</b>\n"
+        f"Среднее время аренды: <b>{avg_minutes} мин</b>"
+    )
+    await message.answer(text)
 
 @dp.message(F.text == "📞 Поддержка")
 async def support(message: types.Message):
