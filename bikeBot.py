@@ -785,7 +785,7 @@ async def finish_rent(message: types.Message):
 
 @dp.message(F.text == "/stats")
 async def stats(message: types.Message):
-    if message.from_user.id not in ADMIN_ID:
+    if message.from_user.id != ADMIN_ID:
         await message.answer("Нет доступа.")
         return
 
