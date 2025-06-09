@@ -393,19 +393,24 @@ async def admin_report(message: types.Message):
         return
 
     IGNORE_PHONES = ["7993734285"]
-    today = date.today().isoformat()
 
+    def get_period(row):
+        return row.get("period") or row.get("Период") or ""
+
+    today = date.today().isoformat()  # '2024-06-10'
     records = get_gsheet_records()
-    today_rents = [row for row in records if today in (row.get("period") or "") and row.get("phone") not in IGNORE_PHONES]
+
+    # Проверь, что реально пишется:
+    for row in records:
+        print("DEBUG:", row)  # или залогируй через await logger.info(str(row))
+
+    today_rents = [row for row in records if today in get_period(row) and row.get("phone") not in IGNORE_PHONES]
 
     if not today_rents:
         await message.answer("Сегодня прокатов не было.")
         return
 
-    # Генерируем график статистики
     await generate_stats_chart(today_rents, filename='daily_stats.png')
-
-    # Отправляем график админу
     await message.answer_photo(
         FSInputFile('daily_stats.png'),
         caption=f"📊 Отчёт за сегодня ({today})"
