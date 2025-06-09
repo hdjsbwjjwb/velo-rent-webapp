@@ -67,7 +67,7 @@ def get_gsheet_records():
     records = sheet.get_all_records()
     return records
 
-ADMIN_ID = [6425885445, 5012960110] # <-- сюда свой user_id
+ADMIN_IDS = [6425885445, 5012960110] # <-- сюда свой user_id
     
 SUPPORT_TEXT = (
     "💬 <b>📞   BalticBike</b>\n\n"
@@ -103,7 +103,7 @@ async def set_user_commands(bot):
     ]
     await bot.set_my_commands(commands, scope=types.BotCommandScopeDefault())
 
-async def set_admin_commands(bot, admin_id):
+async def set_admin_commands(bot, admin_ids):
     commands = [
         types.BotCommand(command="start", description="Запустить бота"),
         types.BotCommand(command="help", description="Справка"),
@@ -112,8 +112,9 @@ async def set_admin_commands(bot, admin_id):
         types.BotCommand(command="active", description="Активные аренды"),
         # другие админ-команды если есть
     ]
-    scope = types.BotCommandScopeChat(chat_id=admin_id)
-    await bot.set_my_commands(commands, scope=scope)
+ for admin_id in admin_ids:
+        scope = types.BotCommandScopeChat(chat_id=admin_id)
+        await bot.set_my_commands(commands, scope=scope)
 
 # -------- Клавиатуры -------- #
 
@@ -210,7 +211,7 @@ async def greet(message: types.Message):
 
 @dp.message(F.text == "/active")
 async def active_rents(message: types.Message):
-    if message.from_user.id != ADMIN_ID:
+    if message.from_user.id != ADMIN_IDS:
         await message.answer("Нет доступа.")
         return
 
@@ -347,7 +348,7 @@ async def restart_bot(message: types.Message):
 
 @dp.message(F.text == "/report")
 async def admin_report(message: types.Message):
-    if message.from_user.id not in ADMIN_ID:
+    if message.from_user.id not in ADMIN_IDS:
         await message.answer("Нет доступа.")
         return
 
@@ -684,7 +685,7 @@ async def start_rent_real(message: types.Message):
     # --- Уведомление админу ---
     try:
         await bot.send_message(
-            ADMIN_ID,
+            ADMIN_IDS,
             f"НАЧАЛАСЬ АРЕНДА!\n"
             f"User: {message.from_user.full_name}\n"
             f"Телефон: {data['phone'] if data['phone'] else 'Не указан'}\n"
@@ -750,7 +751,7 @@ async def finish_rent(message: types.Message):
     # --- Уведомление админу ---
     try:
         await bot.send_message(
-            ADMIN_ID,
+            ADMIN_IDS,
             f"ЗАВЕРШЕНА АРЕНДА!\n"
             f"User: {message.from_user.full_name}\n"
             f"Телефон: {data['phone'] if data.get('phone') else 'Не указан'}\n"
@@ -791,7 +792,7 @@ async def finish_rent(message: types.Message):
 
 @dp.message(F.text == "/stats")
 async def stats(message: types.Message):
-    if message.from_user.id not in ADMIN_ID:
+    if message.from_user.id not in ADMIN_IDS:
         await message.answer("Нет доступа.")
         return
 
@@ -837,6 +838,15 @@ async def stats(message: types.Message):
         f"Среднее время аренды: <b>{avg_minutes} мин</b>"
     )
 
+@dp.message(F.text == "/refresh_commands")
+async def refresh_commands(message: types.Message):
+    if message.from_user.id not in ADMIN_IDS:
+        await message.answer("Нет доступа.")
+        return
+    await set_user_commands(bot)
+    for admin_id in ADMIN_IDS:
+        await set_admin_commands(bot, admin_id)
+    await message.answer("Команды обновлены.")
 
 # --- Показываем время аренды, если аренда активна --- #
 @dp.message(lambda m: m.from_user.id in user_rent_data and user_rent_data[m.from_user.id].get("is_renting"))
@@ -871,7 +881,7 @@ async def send_daily_report():
     today_rents = [row for row in records if today in row.get("period", "")]
 
     if not today_rents:
-        await bot.send_message(ADMIN_ID, "Сегодня прокатов не было.")
+        await bot.send_message(ADMIN_IDS, "Сегодня прокатов не было.")
         return
 
     bikes_counter = Counter()
@@ -902,12 +912,12 @@ async def send_daily_report():
         f"Выручка за день: <b>{total_income} руб.</b>\n"
         f"Среднее время аренды: <b>{avg_minutes} мин</b>"
     )
-    await bot.send_message(ADMIN_ID, text)
+    await bot.send_message(ADMIN_IDS, text)
 
 
 async def main():
   #  await set_user_commands(bot)
-  #  await set_admin_commands(bot, ADMIN_ID)
+  #  await set_admin_commands(bot, ADMIN_IDS)
     await dp.start_polling(bot)
     
 if __name__ == "__main__":
