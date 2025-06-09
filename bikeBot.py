@@ -103,7 +103,7 @@ def categories_keyboard():
             ] for cat in bike_categories.keys()
         ] +
         [
-            [types.KeyboardButton(text="🟢 НАЧАТЬ АРЕНДУ 🚴🚴🚴...")],
+            [types.KeyboardButton(text="🟢 НАЧАТЬ АРЕНДУ 🟢")],
             [types.KeyboardButton(text="Посмотреть корзину")]
         ],
         resize_keyboard=True
@@ -490,7 +490,7 @@ async def clear_cart(message: types.Message):
     await message.answer("Корзина очищена! Можете выбрать велосипеды снова.", reply_markup=keyboard)
 
 
-@dp.message(F.text == "🟢 НАЧАТЬ АРЕНДУ 🚴🚴🚴...")
+@dp.message(F.text == "🟢 НАЧАТЬ АРЕНДУ 🟢")
 async def start_rent_preview(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
