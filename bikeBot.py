@@ -32,33 +32,38 @@ from datetime import date
 import json
 
 async def generate_stats_chart(records, filename='stats_chart.png'):
-    # Считаем статистику
+    from collections import Counter
+    import matplotlib.pyplot as plt
+    import json
+
     bikes_counter = Counter()
     total_income = 0
     total_minutes = 0
 
     for row in records:
-        cart_json = row.get("cart") or "{}"
+        cart_json = row.get("cart") or row.get("Велосипеды") or "{}"
         cart = json.loads(cart_json)
         for cat, qty in cart.items():
             bikes_counter[cat] += int(qty)
 
-        total_income += int(row.get("total_price", 0))
-        total_minutes += int(row.get("minutes", 0))
+        total_income += int(row.get("total_price", 0) or row.get("Сумма", "0").replace("₽", "").strip() or 0)
+        total_minutes += int(row.get("minutes", 0) or row.get("Время проката", 0))
 
-    # Создаём фигуру с графиками
+    if records:
+        avg_minutes = total_minutes // len(records)
+    else:
+        avg_minutes = 0
+
     plt.figure(figsize=(12, 6))
 
-    # Первый график — популярность велосипедов
     plt.subplot(1, 2, 1)
     plt.bar(bikes_counter.keys(), bikes_counter.values(), color='skyblue')
     plt.title('Популярность велосипедов')
     plt.ylabel('Количество аренд')
 
-    # Второй график — общая выручка и среднее время
     plt.subplot(1, 2, 2)
-    plt.bar(['Выручка', 'Среднее время аренды (мин)'], 
-            [total_income, total_minutes // len(records)], color=['lightgreen', 'salmon'])
+    plt.bar(['Выручка', 'Среднее время аренды (мин)'],
+            [total_income, avg_minutes], color=['lightgreen', 'salmon'])
     plt.title('Выручка и среднее время')
 
     plt.tight_layout()
@@ -414,6 +419,7 @@ async def admin_report(message: types.Message):
     if not today_rents:
         await message.answer("Сегодня прокатов не было.")
         return
+    print("TODAY_RENTS:", today_rents)
 
     await generate_stats_chart(today_rents, filename='daily_stats.png')
     await message.answer_photo(
