@@ -697,10 +697,10 @@ async def finish_rent(message: types.Message):
     }
     
     keyboard = categories_keyboard()
-await message.answer(
-    "Аренда завершена! Можете выбрать велосипеды для новой аренды:",
-    reply_markup=keyboard
-)
+    await message.answer(
+        "Аренда завершена! Можете выбрать велосипеды для новой аренды:",
+        reply_markup=keyboard
+    )
 
 
 @dp.message(F.text == "/stats")
