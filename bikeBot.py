@@ -331,7 +331,7 @@ async def admin_report(message: types.Message):
         await message.answer("Нет доступа.")
         return
 
-    IGNORE_PHONES = ["79937342853"]
+    IGNORE_PHONES = ["7993734285"]
 
     from datetime import date
 
