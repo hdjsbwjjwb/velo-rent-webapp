@@ -69,6 +69,10 @@ def get_gsheet_records():
 
 ADMIN_ID = [6425885445, 5012960110] # <-- сюда свой user_id
 
+if message.from_user.id not in ADMIN_ID:
+    await message.answer("Нет доступа.")
+    return
+    
 SUPPORT_TEXT = (
     "💬 <b>📞   BalticBike</b>\n\n"
     "Если возникли вопросы:\n"
