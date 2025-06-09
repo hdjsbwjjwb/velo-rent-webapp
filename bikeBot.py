@@ -349,8 +349,8 @@ async def restart_bot(message: types.Message):
 @dp.message(F.text == "/report")
 async def admin_report(message: types.Message):
     if message.from_user.id != ADMIN_ID:
-    await message.answer("Нет доступа.")
-    return
+        await message.answer("Нет доступа.")
+        return
     
     IGNORE_PHONES = ["7993734285"]
 
