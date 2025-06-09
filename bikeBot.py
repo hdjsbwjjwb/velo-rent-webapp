@@ -67,7 +67,7 @@ def get_gsheet_records():
     records = sheet.get_all_records()
     return records
 
-ADMIN_ID = 6425885445 # <-- сюда свой user_id
+ADMIN_ID = 7666320318 # <-- сюда свой user_id
     
 SUPPORT_TEXT = (
     "💬 <b>📞   BalticBike</b>\n\n"
