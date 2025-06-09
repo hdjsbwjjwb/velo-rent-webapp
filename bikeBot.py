@@ -734,8 +734,7 @@ async def finish_rent(message: types.Message):
     await message.answer_photo(
         FSInputFile("images/qr.jpg"),
         caption=(
-            f"✅ <b>Аренда завершена!</b>  ⏰ <b>{end_time.strftime('%H:%M')}</b>\n"
-            "━━━━━━━━━━━━━━━━\n"
+            f"<b>Аренда завершена!</b>  ⏰ <b>{end_time.strftime('%H:%M')}</b>\n"
             f"<b>Вы катались:</b> {ride_time}\n"
             f"{cart_str}\n"
             "━━━━━━━━━━━━━━━━\n"
