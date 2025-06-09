@@ -708,8 +708,6 @@ async def stats(message: types.Message):
         return
 
     try:
-        with open("rents.csv", encoding="utf-8") as f:
-            reader = list(csv.DictReader(f))
     except FileNotFoundError:
         await message.answer("Пока нет данных о прокатах.")
         return
@@ -769,15 +767,13 @@ async def fallback(message: types.Message):
 
 # -------- Запуск -------- #
 async def send_daily_report():
-    try:
-        with open("rents.csv", encoding="utf-8") as f:
-            reader = list(csv.DictReader(f))
-    except FileNotFoundError:
-        await bot.send_message(ADMIN_ID, "За сегодня нет данных о прокатах.")
-        return
+    from datetime import date
+    from collections import Counter
+    import json
 
+    records = get_gsheet_records()
     today = date.today().isoformat()
-    today_rents = [row for row in reader if today in row["period"]]
+    today_rents = [row for row in records if today in row.get("period", "")]
 
     if not today_rents:
         await bot.send_message(ADMIN_ID, "Сегодня прокатов не было.")
@@ -789,12 +785,15 @@ async def send_daily_report():
     total_bikes = 0
 
     for row in today_rents:
-        cart = json.loads(row["cart"])
+        try:
+            cart = json.loads(row["cart"])
+        except Exception:
+            cart = {}
         for cat, qty in cart.items():
             bikes_counter[cat] += int(qty)
             total_bikes += int(qty)
-        total_income += int(row["total_price"])
-        total_minutes += int(row["minutes"])
+        total_income += int(row.get("total_price", 0))
+        total_minutes += int(row.get("minutes", 0))
 
     most_popular = bikes_counter.most_common(1)
     popular_bike = most_popular[0][0] if most_popular else "Нет данных"
@@ -809,6 +808,7 @@ async def send_daily_report():
         f"Среднее время аренды: <b>{avg_minutes} мин</b>"
     )
     await bot.send_message(ADMIN_ID, text)
+
 
 async def main():
     await dp.start_polling(bot)
