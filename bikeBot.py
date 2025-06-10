@@ -428,7 +428,7 @@ async def admin_report(message: types.Message):
     if not today_rents:
         await message.answer("Сегодня прокатов не было.")
         return
-    print("TODAY_RENTS:", today_rents)
+    await logger.info("TODAY_RENTS:", today_rents)
 
     await generate_stats_chart(today_rents, filename='daily_stats.png')
     await message.answer_photo(
@@ -679,9 +679,9 @@ async def handle_contact(message: types.Message):
     try:
         await start_rent_real(message)
     except Exception as e:
-        print(f"Ошибка при записи в Google Таблицу: {e}")
+        await logger.info(f"Ошибка при записи в Google Таблицу: {e}")
         await message.answer(f"Ошибка при запуске аренды: {e}")
-        print("Ошибка при запуске аренды:", e)
+        await logger.info("Ошибка при запуске аренды:", e)
 
 async def start_rent_real(message: types.Message):
     user_id = message.from_user.id
@@ -722,7 +722,7 @@ async def start_rent_real(message: types.Message):
             f"Корзина:\n{cart_str}"
         )
     except Exception as e:
-        print(f"Не удалось отправить уведомление админу (начало): {e}")
+        await logger.info(f"Не удалось отправить уведомление админу (начало): {e}")
 
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
@@ -794,7 +794,7 @@ async def finish_rent(message: types.Message):
         )
     except Exception as e:
         await logger.error(f"Ошибка отправки уведомления админу при начале аренды: {e}")
-        print(f"Не удалось отправить уведомление админу (конец): {e}")
+        await logger.info(f"Не удалось отправить уведомление админу (конец): {e}")
 
     # --- Сохраняем завершённую аренду (Google Sheets, если реализовано) ---
     period_str = f"{date.today().isoformat()} {start_time.strftime('%H:%M')} — {end_time.strftime('%H:%M')}"
