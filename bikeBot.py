@@ -80,7 +80,7 @@ async def generate_stats_chart(records, filename='stats_chart.png'):
 logger = Logger.with_default_handlers(name='bike_bot', level='INFO')
 
 async def save_rent_to_gsheet(data, duration_min, total_price, period_str):
-    print("save_rent_to_gsheet вызвана")
+    await logger.info("save_rent_to_gsheet вызвана")
     try:
         scope = [
             "https://spreadsheets.google.com/feeds",
@@ -103,7 +103,7 @@ async def save_rent_to_gsheet(data, duration_min, total_price, period_str):
             total_price,
             period_str
         ])
-        print("✅ Успешно добавлено в Google Таблицу")
+        await logger.info("✅ Успешно добавлено в Google Таблицу")
     except Exception as e:
         await logger.error(f"Ошибка записи в Google таблицу: {e}")
         traceback.print_exc()
@@ -724,6 +724,7 @@ async def start_rent_real(message: types.Message):
 
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
+    await logger.info("finish_rent вызван")
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
     if not data or not data["is_renting"]:
