@@ -415,8 +415,10 @@ async def admin_report(message: types.Message):
     # Для отладки выводим today и все периоды
     await logger.info(f"TODAY: {today}")
     for row in records:
-        await logger.info(f"PERIOD: {get_period(row)}")
-        await logger.info("INCLUDED:", today in get_period(row))
+        period = get_period(row)
+        included = today in period
+        await logger.info(f"PERIOD: {period}")
+        await logger.info(f"INCLUDED: {included}")
 
     today_rents = [
         row for row in records
