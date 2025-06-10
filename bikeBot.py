@@ -428,7 +428,7 @@ async def admin_report(message: types.Message):
     if not today_rents:
         await message.answer("Сегодня прокатов не было.")
         return
-    await logger.info("TODAY_RENTS:", today_rents)
+    await logger.info("TODAY_RENTS:\n" + "\n".join(str(r) for r in today_rents))
 
     await generate_stats_chart(today_rents, filename='daily_stats.png')
     await message.answer_photo(
