@@ -413,10 +413,10 @@ async def admin_report(message: types.Message):
     records = get_gsheet_records()
 
     # Для отладки выводим today и все периоды
-    print(f"TODAY: {today}")
+    await logger.info(f"TODAY: {today}")
     for row in records:
-        print(f"PERIOD: {get_period(row)}")
-        print("INCLUDED:", today in get_period(row))
+        await logger.info(f"PERIOD: {get_period(row)}")
+        await logger.info("INCLUDED:", today in get_period(row))
 
     today_rents = [
         row for row in records
