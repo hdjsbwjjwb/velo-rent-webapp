@@ -722,6 +722,8 @@ async def start_rent_real(message: types.Message):
             f"Корзина:\n{cart_str}"
         )
     except Exception as e:
+        
+        pass
         #await logger.info(f"Не удалось отправить уведомление админу (начало): {e}")
 
 @dp.message(F.text == "🔴 Завершить аренду")
