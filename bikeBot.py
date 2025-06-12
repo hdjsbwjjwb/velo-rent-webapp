@@ -80,7 +80,7 @@ async def generate_stats_chart(records, filename='stats_chart.png'):
 logger = Logger.with_default_handlers(name='bike_bot', level='INFO')
 
 async def save_rent_to_gsheet(data, duration_min, total_price, period_str):
-    await logger.info("save_rent_to_gsheet вызвана")
+    #await logger.info("save_rent_to_gsheet вызвана")
     try:
         scope = [
             "https://spreadsheets.google.com/feeds",
@@ -103,7 +103,7 @@ async def save_rent_to_gsheet(data, duration_min, total_price, period_str):
             total_price,
             period_str
         ])
-        await logger.info("✅ Успешно добавлено в Google Таблицу")
+        #await logger.info("✅ Успешно добавлено в Google Таблицу")
     except Exception as e:
         await logger.error(f"Ошибка записи в Google таблицу: {e}")
         traceback.print_exc()
@@ -413,12 +413,12 @@ async def admin_report(message: types.Message):
     records = get_gsheet_records()
 
     # Для отладки выводим today и все периоды
-    await logger.info(f"TODAY: {today}")
+    #await logger.info(f"TODAY: {today}")
     for row in records:
         period = get_period(row)
         included = today in period
-        await logger.info(f"PERIOD: {period}")
-        await logger.info(f"INCLUDED: {included}")
+        #await logger.info(f"PERIOD: {period}")
+        #await logger.info(f"INCLUDED: {included}")
 
     today_rents = [
         row for row in records
@@ -428,7 +428,7 @@ async def admin_report(message: types.Message):
     if not today_rents:
         await message.answer("Сегодня прокатов не было.")
         return
-    await logger.info("TODAY_RENTS:\n" + "\n".join(str(r) for r in today_rents))
+    #await logger.info("TODAY_RENTS:\n" + "\n".join(str(r) for r in today_rents))
 
     await generate_stats_chart(today_rents, filename='daily_stats.png')
     await message.answer_photo(
@@ -679,9 +679,9 @@ async def handle_contact(message: types.Message):
     try:
         await start_rent_real(message)
     except Exception as e:
-        await logger.info(f"Ошибка при записи в Google Таблицу: {e}")
+        #await logger.info(f"Ошибка при записи в Google Таблицу: {e}")
         await message.answer(f"Ошибка при запуске аренды: {e}")
-        await logger.info("Ошибка при запуске аренды:", e)
+        #await logger.info("Ошибка при запуске аренды:", e)
 
 async def start_rent_real(message: types.Message):
     user_id = message.from_user.id
@@ -689,7 +689,7 @@ async def start_rent_real(message: types.Message):
     data["start_time"] = datetime.now(KALININGRAD_TZ)
     data["is_renting"] = True
     keyboard = during_rent_keyboard()
-    await logger.info(f"Аренда началась: {message.from_user.full_name}, id: {user_id}, телефон: {data.get('phone')}")
+    #await logger.info(f"Аренда началась: {message.from_user.full_name}, id: {user_id}, телефон: {data.get('phone')}")
 
     cart_str = "\n".join([
         f"{bike_categories[cat]['emoji']} <b>{cat}</b>: {qty} шт. ({bike_categories[cat]['hour']}₽/ч)"
@@ -722,11 +722,11 @@ async def start_rent_real(message: types.Message):
             f"Корзина:\n{cart_str}"
         )
     except Exception as e:
-        await logger.info(f"Не удалось отправить уведомление админу (начало): {e}")
+        #await logger.info(f"Не удалось отправить уведомление админу (начало): {e}")
 
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
-    await logger.info("finish_rent вызван")
+    #await logger.info("finish_rent вызван")
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
     if not data or not data["is_renting"]:
@@ -760,7 +760,7 @@ async def finish_rent(message: types.Message):
 
     cart_str = "\n".join(lines)
     
-    await logger.info(f"Аренда завершена: {message.from_user.full_name}, id: {user_id}, время: {ride_time}, сумма: {total_price} руб.")
+    #await logger.info(f"Аренда завершена: {message.from_user.full_name}, id: {user_id}, время: {ride_time}, сумма: {total_price} руб.")
    
     # --- КРАСИВОЕ ФИНАЛЬНОЕ СООБЩЕНИЕ ---
     await message.answer_photo(
@@ -794,7 +794,7 @@ async def finish_rent(message: types.Message):
         )
     except Exception as e:
         await logger.error(f"Ошибка отправки уведомления админу при начале аренды: {e}")
-        await logger.info(f"Не удалось отправить уведомление админу (конец): {e}")
+        #await logger.info(f"Не удалось отправить уведомление админу (конец): {e}")
 
     # --- Сохраняем завершённую аренду (Google Sheets, если реализовано) ---
     period_str = f"{date.today().isoformat()} {start_time.strftime('%H:%M')} — {end_time.strftime('%H:%M')}"
