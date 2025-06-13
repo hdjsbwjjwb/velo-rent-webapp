@@ -692,7 +692,7 @@ async def start_rent_real(message: types.Message):
     #await logger.info(f"Аренда началась: {message.from_user.full_name}, id: {user_id}, телефон: {data.get('phone')}")
 
     cart_str = "\n".join([
-    f"• <b>{cat}</b>: {qty} шт."
+    f"• <b>{cat}</b> — <b>{qty}</b> шт. <i>({bike_categories[cat]['hour']}₽/ч)</i>"
     for cat, qty in data["cart"].items()
     ])
     total_hour_price = sum([bike_categories[cat]['hour'] * qty for cat, qty in data["cart"].items()])
@@ -764,7 +764,16 @@ async def finish_rent(message: types.Message):
 
     
     #await logger.info(f"Аренда завершена: {message.from_user.full_name}, id: {user_id}, время: {ride_time}, сумма: {total_price} руб.")
-   
+
+
+    # Предполагаем, что data["cart"] — твой словарь {категория: кол-во}
+# bike_categories[cat]['hour'] — цена за час
+
+    details = []
+    for cat, qty in data["cart"].items():
+        price = bike_categories[cat]['hour']
+        details.append(f"{qty}×{price}")
+    calculation_str = " + ".join(details) + f" = {total_price} руб."
     # --- КРАСИВОЕ ФИНАЛЬНОЕ СООБЩЕНИЕ ---
     cart_str = "\n".join([
     f"• <b>{cat}</b>: {qty} шт."
@@ -776,6 +785,7 @@ async def finish_rent(message: types.Message):
         f"<b>Время в пути:</b> <u>{ride_time}</u>\n"
         "━━━━━━━━━━━━━━━━\n"
         f"<b>Вы брали:</b>\n{cart_str}\n"
+        f"💵 <b>Расчёт суммы:</b> <code>{calculation_str}</code>\n"
         "━━━━━━━━━━━━━━━━\n"
         f"💰 <b>Итого к оплате:</b> <u>{total_price} руб.</u>\n"
         "━━━━━━━━━━━━━━━━\n"
