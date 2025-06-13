@@ -769,16 +769,18 @@ async def finish_rent(message: types.Message):
     # Предполагаем, что data["cart"] — твой словарь {категория: кол-во}
 # bike_categories[cat]['hour'] — цена за час
 
-    details = []
-    for cat, qty in data["cart"].items():
-        price = bike_categories[cat]['hour']
-        details.append(f"{qty}×{price}")
-    calculation_str = " + ".join(details) + f" = {total_price} руб."
-    # --- КРАСИВОЕ ФИНАЛЬНОЕ СООБЩЕНИЕ ---
+    # Корзина красиво:
     cart_str = "\n".join([
-    f"• <b>{cat}</b>: {qty} шт."
-    for cat, qty in data["cart"].items()
+        f"• <b>{cat}</b>: <b>{qty}</b> шт."
+        for cat, qty in data["cart"].items()
     ])
+    
+    # Итоговая сумма:
+    total_price = sum([qty * bike_categories[cat]['hour'] for cat, qty in data["cart"].items()])
+    
+    # Строка с расчётом:
+    details = [f"{qty}×{bike_categories[cat]['hour']}" for cat, qty in data["cart"].items()]
+    calculation_str = " + ".join(details) + f" = {total_price} руб."
     
     await message.answer(
         f"<b>Аренда завершена!</b>\n"
