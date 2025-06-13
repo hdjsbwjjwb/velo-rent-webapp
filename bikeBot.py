@@ -729,7 +729,6 @@ async def start_rent_real(message: types.Message):
 
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
-    #await logger.info("finish_rent вызван")
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
     if not data or not data["is_renting"]:
@@ -739,49 +738,41 @@ async def finish_rent(message: types.Message):
     end_time = datetime.now(KALININGRAD_TZ)
     start_time = data["start_time"]
     duration = end_time - start_time
-    rounded_minutes = max(1, int(duration.total_seconds() // 60))
+    total_minutes = duration.total_seconds() / 60
 
-    # Время в удобном формате
-    if rounded_minutes >= 60:
-        hours_part = rounded_minutes // 60
-        minutes_part = rounded_minutes % 60
+    # Округляем до ближайших 15 минут
+    block = 15
+    pay_minutes = int(round(total_minutes / block) * block)
+    if pay_minutes == 0:
+        pay_minutes = 15  # Минимальная оплата всегда за 15 минут
+
+    # Формат времени для сообщения
+    if int(total_minutes) >= 60:
+        hours_part = int(total_minutes) // 60
+        minutes_part = int(total_minutes) % 60
         ride_time = f"{hours_part} ч {minutes_part} мин"
     else:
-        ride_time = f"{rounded_minutes} мин"
+        ride_time = f"{int(total_minutes)} мин"
 
-    cart_str = ""
     total_price = 0
-    lines = []
+    calc_lines = []
+    cart_lines = []
+
     for cat, qty in data["cart"].items():
         hour_price = bike_categories[cat]["hour"]
-        emoji = bike_categories[cat]['emoji']
-        minute_price = hour_price / 60
-        price = int(minute_price * rounded_minutes)
-        line = f"{emoji} <b>{cat}</b>: {qty} шт. × {rounded_minutes} мин × {minute_price:.2f}₽ = {price * qty}₽"
-        lines.append(line)
-        total_price += price * qty
+        block_price = hour_price / 60 * pay_minutes
+        cat_price = int(block_price * qty)
+        calc_lines.append(
+            f"{qty}×({hour_price}/60×{pay_minutes}) = {cat_price}"
+        )
+        cart_lines.append(
+            f"• <b>{cat}</b>: <b>{qty}</b> шт. (<i>{hour_price}₽/ч</i>)"
+        )
+        total_price += cat_price
 
+    calculation_str = " + ".join(calc_lines) + f" = {total_price} руб."
+    cart_str = "\n".join(cart_lines)
 
-    
-    #await logger.info(f"Аренда завершена: {message.from_user.full_name}, id: {user_id}, время: {ride_time}, сумма: {total_price} руб.")
-
-
-    # Предполагаем, что data["cart"] — твой словарь {категория: кол-во}
-# bike_categories[cat]['hour'] — цена за час
-
-    # Корзина красиво:
-    cart_str = "\n".join([
-        f"• <b>{cat}</b>: <b>{qty}</b> шт."
-        for cat, qty in data["cart"].items()
-    ])
-    
-    # Итоговая сумма:
-    total_price = sum([qty * bike_categories[cat]['hour'] for cat, qty in data["cart"].items()])
-    
-    # Строка с расчётом:
-    details = [f"{qty}×{bike_categories[cat]['hour']}" for cat, qty in data["cart"].items()]
-    calculation_str = " + ".join(details) + f" = {total_price} руб."
-    
     await message.answer(
         f"<b>Аренда завершена!</b>\n"
         f"<b>Время в пути:</b> <u>{ride_time}</u>\n"
