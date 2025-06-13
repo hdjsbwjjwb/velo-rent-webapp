@@ -692,22 +692,23 @@ async def start_rent_real(message: types.Message):
     #await logger.info(f"Аренда началась: {message.from_user.full_name}, id: {user_id}, телефон: {data.get('phone')}")
 
     cart_str = "\n".join([
-        f"{bike_categories[cat]['emoji']} <b>{cat}</b>: {qty} шт. ({bike_categories[cat]['hour']}₽/ч)"
-        for cat, qty in data["cart"].items()
+    f"• <b>{cat}</b>: {qty} шт."
+    for cat, qty in data["cart"].items()
     ])
     total_hour_price = sum([bike_categories[cat]['hour'] * qty for cat, qty in data["cart"].items()])
 
     # --- КРАСИВОЕ СООБЩЕНИЕ ДЛЯ ПОЛЬЗОВАТЕЛЯ ---
     await message.answer(
-        f"🚴‍♂️ <b>Аренда началась</b>  ⏰ <b>{data['start_time'].strftime('%H:%M')}</b>\n"
+        f"🚴‍♂️ <b>Аренда началась!</b>\n"
+        f"⏰ <b>Время старта:</b> <u>{data['start_time'].strftime('%H:%M')}</u>\n"
         "━━━━━━━━━━━━━━━━\n"
-        "<b>Вы взяли:</b>\n"
-        f"{cart_str}\n"
+        f"🛒 <b>Вы взяли:</b>\n{cart_str}\n"
         "━━━━━━━━━━━━━━━━\n"
         f"💸 <b>Стоимость за 1 час:</b> <u>{total_hour_price} руб.</u>\n"
         "━━━━━━━━━━━━━━━━\n"
-        "Для завершения аренды используйте кнопку ниже 👇",
-        reply_markup=keyboard
+        "Желаем вам приятной поездке 😊",
+        reply_markup=keyboard,
+        parse_mode="HTML"
     )
 
     # --- Уведомление админу ---
@@ -760,21 +761,27 @@ async def finish_rent(message: types.Message):
         lines.append(line)
         total_price += price * qty
 
-    cart_str = "\n".join(lines)
+
     
     #await logger.info(f"Аренда завершена: {message.from_user.full_name}, id: {user_id}, время: {ride_time}, сумма: {total_price} руб.")
    
     # --- КРАСИВОЕ ФИНАЛЬНОЕ СООБЩЕНИЕ ---
+    cart_str = "\n".join([
+    f"• <b>{cat}</b>: {qty} шт."
+    for cat, qty in data["cart"].items()
+    ])
+    
     await message.answer(
-    f"<b>Аренда закончилась</b>\n"
-    f"\n"
-    f"Вы катались: <u>{ride_time}</u>\n"
-    f"\n"
-    f"{cart_str}\n"
-    "━━━━━━━━━━━━━━━━\n"
-    f"💰 <b>Итого к оплате:</b> <u>{total_price} руб.</u> 💰\n",
-    parse_mode="HTML"
-)
+        f"⏹️ <b>Аренда завершена!</b>\n"
+        f"⏳ <b>Время в пути:</b> <u>{ride_time}</u>\n"
+        "━━━━━━━━━━━━━━━━\n"
+        f"🛒 <b>Вы арендовали:</b>\n{cart_str}\n"
+        "━━━━━━━━━━━━━━━━\n"
+        f"💰 <b>Итого к оплате:</b> <u>{total_price} руб.</u>\n"
+        "━━━━━━━━━━━━━━━━\n"
+        "<i>Спасибо за поездку! Хорошего дня 😊</i>",
+        parse_mode="HTML"
+    )
 
 
     # --- Уведомление админу ---
