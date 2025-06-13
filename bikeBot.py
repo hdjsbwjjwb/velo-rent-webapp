@@ -740,13 +740,13 @@ async def finish_rent(message: types.Message):
     duration = end_time - start_time
     total_minutes = duration.total_seconds() / 60
 
-    # Округляем до ближайших 15 минут
+    # Округляем к ближайшим 15 минутам (с логикой приближения)
     block = 15
     pay_minutes = int(round(total_minutes / block) * block)
     if pay_minutes == 0:
-        pay_minutes = 15  # Минимальная оплата всегда за 15 минут
+        pay_minutes = 15
 
-    # Формат времени для сообщения
+    # Время в удобном формате
     if int(total_minutes) >= 60:
         hours_part = int(total_minutes) // 60
         minutes_part = int(total_minutes) % 60
@@ -755,22 +755,17 @@ async def finish_rent(message: types.Message):
         ride_time = f"{int(total_minutes)} мин"
 
     total_price = 0
-    calc_lines = []
     cart_lines = []
 
     for cat, qty in data["cart"].items():
         hour_price = bike_categories[cat]["hour"]
         block_price = hour_price / 60 * pay_minutes
         cat_price = int(block_price * qty)
-        calc_lines.append(
-            f"{qty}×({hour_price}/60×{pay_minutes}) = {cat_price}"
-        )
         cart_lines.append(
             f"• <b>{cat}</b>: <b>{qty}</b> шт. (<i>{hour_price}₽/ч</i>)"
         )
         total_price += cat_price
 
-    calculation_str = " + ".join(calc_lines) + f" = {total_price} руб."
     cart_str = "\n".join(cart_lines)
 
     await message.answer(
@@ -785,7 +780,6 @@ async def finish_rent(message: types.Message):
         parse_mode="HTML"
     )
 
-
     # --- Уведомление админу ---
     try:
         await bot.send_message(
@@ -799,19 +793,18 @@ async def finish_rent(message: types.Message):
             f"Стоимость: {total_price} руб."
         )
     except Exception as e:
-        await logger.error(f"Ошибка отправки уведомления админу при начале аренды: {e}")
-        #await logger.info(f"Не удалось отправить уведомление админу (конец): {e}")
+        await logger.error(f"Ошибка отправки уведомления админу при завершении аренды: {e}")
 
-    # --- Сохраняем завершённую аренду (Google Sheets, если реализовано) ---
+    # --- Сохраняем в Google Sheets ---
     period_str = f"{date.today().isoformat()} {start_time.strftime('%H:%M')} — {end_time.strftime('%H:%M')}"
     await save_rent_to_gsheet({
         "user_id": message.from_user.id,
         "user_name": message.from_user.full_name,
         "phone": data.get("phone"),
         "cart": data.get("cart"),
-    }, rounded_minutes, total_price, period_str)
+    }, pay_minutes, total_price, period_str)
 
-    # --- Сбросить данные аренды, но оставить телефон ---
+    # --- Сброс данных аренды ---
     user_rent_data[user_id] = {
         "cart": {},
         "start_time": None,
@@ -821,12 +814,12 @@ async def finish_rent(message: types.Message):
         "phone": data.get("phone"),
         "asked_phone": False,
     }
-    
+
     keyboard = categories_keyboard()
     await message.answer(
-    "Аренда завершена! Можете выбрать велосипеды для новой аренды:",
-    reply_markup=keyboard
-)
+        "Аренда завершена! Можете выбрать велосипеды для новой аренды:",
+        reply_markup=keyboard
+    )
 
 @dp.message(F.text == "/stats")
 async def stats(message: types.Message):
