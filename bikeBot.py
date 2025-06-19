@@ -163,7 +163,7 @@ async def set_admin_commands(bot, admin_id):
     commands = [
         types.BotCommand(command="start", description="Запустить бота"),
         types.BotCommand(command="help", description="Справка"),
-        types.BotCommand(command="stats", description="Статистика (для админа)"),
+        types.BotCommand(command="stats", description="Статистика"),
         types.BotCommand(command="report", description="Отчёт за сегодня"),
         types.BotCommand(command="active", description="Активные аренды"),
         # другие админ-команды если есть
@@ -175,8 +175,9 @@ async def set_admin_commands(bot, admin_id):
 
 def main_menu_keyboard():
     return types.ReplyKeyboardMarkup(
-        keyboard=[
-            [types.KeyboardButton(text="Перезапустить бот"), types.KeyboardButton(text="📞 Поддержка")]
+        keyboard=[ 
+            [types.KeyboardButton(text="📞 Поддержка")]
+            # Убираем кнопки "Перезапустить бота", "📞 Поддержка" остаётся
         ],
         resize_keyboard=True
     )
@@ -236,33 +237,47 @@ def confirm_rent_inline():
 
 @dp.message(F.text == "/start")
 async def greet(message: types.Message):
-    try:
-        photo = FSInputFile("welcome.png")
-        await message.answer_photo(
-            photo,
-            caption=(
+    user_id = message.from_user.id
+
+    # Проверяем, является ли пользователь администратором
+    if user_id != ADMIN_ID:
+        # Если пользователь не админ, не показываем картинку и текст
+        await message.answer(
+            "Добро пожаловать в сервис велопроката BalticBike!\n\n"
+            "🌊 Прокатитесь по Балтийской косе и побережью на стильных велосипедах!"
+        )
+        # Отображаем клавиатуру для выбора категории велосипеда
+        keyboard = categories_keyboard()
+        await message.answer("Выберите категорию велосипеда для аренды:", reply_markup=keyboard)
+    else:
+        # Если пользователь — админ, показываем картинку и текст
+        try:
+            photo = FSInputFile("welcome.png")
+            await message.answer_photo(
+                photo,
+                caption=(
+                    "<b>Добро пожаловать в сервис велопроката BalticBike!</b>\n\n"
+                    "🌊 Прокатитесь по Балтийской косе и побережью на стильных велосипедах!\n"
+                )
+            )
+        except Exception:
+            await message.answer(
                 "<b>Добро пожаловать в сервис велопроката BalticBike!</b>\n\n"
                 "🌊 Прокатитесь по Балтийской косе и побережью на стильных велосипедах!\n"
             )
-        )
-    except Exception:
-        await message.answer(
-            "<b>Добро пожаловать в сервис велопроката BalticBike!</b>\n\n"
-            "🌊 Прокатитесь по Балтийской косе и побережью на стильных велосипедах!\n"
-        )
-    # Сразу выводим выбор категорий!
-    user_id = message.from_user.id
-    user_rent_data[user_id] = {
-        "cart": {},
-        "start_time": None,
-        "awaiting_quantity": False,
-        "last_category": None,
-        "is_renting": False,
-        "phone": None,
-        "asked_phone": False,
-    }
-    keyboard = categories_keyboard()
-    await message.answer("Выберите категорию велосипеда для аренды:", reply_markup=keyboard)
+
+        # Сразу выводим выбор категорий для админа
+        user_rent_data[user_id] = {
+            "cart": {},
+            "start_time": None,
+            "awaiting_quantity": False,
+            "last_category": None,
+            "is_renting": False,
+            "phone": None,
+            "asked_phone": False,
+        }
+        keyboard = categories_keyboard()
+        await message.answer("Выберите категорию велосипеда для аренды:", reply_markup=keyboard)
 
 @dp.message(F.text == "/active")
 async def active_rents(message: types.Message):
@@ -368,14 +383,26 @@ async def active_rents(message: types.Message):
 
 @dp.message(F.text == "/help")
 async def help_cmd(message: types.Message):
-    await message.answer(
-        "<b>ℹ️ Краткая инструкция по боту BalticBike:</b>\n"
-        "• <b>/start</b> — начать сначала\n"
-        "• <b>/help</b> — справка\n"
-        "• <b>/myid</b> — узнать свой ID\n"
-        "• <b>📞 Поддержка</b> — связаться с нами\n"
-    )
+    user_id = message.from_user.id
 
+    # Проверяем, является ли пользователь администратором
+    if user_id != ADMIN_ID:
+        # Если пользователь не админ, не показываем полное меню и инструкцию
+        await message.answer(
+            "<b>ℹ️ Краткая инструкция по боту BalticBike:</b>\n"
+            "• <b>/start</b> — начать сначала\n"
+            "• <b>📞 Поддержка</b> — связаться с нами\n"
+        )
+    else:
+        # Для админа показываем полное меню и инструкцию
+        await message.answer(
+            "<b>ℹ️ Краткая инструкция по боту BalticBike:</b>\n"
+            "• <b>/start</b> — начать сначала\n"
+            "• <b>/help</b> — справка\n"
+            "• <b>/myid</b> — узнать свой ID\n"
+            "• <b>📞 Поддержка</b> — связаться с нами\n"
+        )
+        
 @dp.message(F.text == "Перезапустить бот")
 async def restart_bot(message: types.Message):
     user_id = message.from_user.id
