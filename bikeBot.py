@@ -182,14 +182,21 @@ def main_menu_keyboard():
         resize_keyboard=True
     )
 
-def categories_inline_keyboard():
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=f"{bike_categories[cat]['emoji']} {cat} ({bike_categories[cat]['hour']}₽/ч)", callback_data=f"select_category_{cat}")]
-        for cat in bike_categories.keys()
-    ] + [
-        [InlineKeyboardButton(text="🟢 НАЧАТЬ АРЕНДУ 🟢", callback_data="start_rent")],
-        [InlineKeyboardButton(text="Посмотреть корзину", callback_data="view_cart")]
-    ])
+def categories_keyboard():
+    return types.ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                types.KeyboardButton(
+                    text=f"{bike_categories[cat]['emoji']} {cat} ({bike_categories[cat]['hour']}₽/ч)"
+                )
+            ] for cat in bike_categories.keys()
+        ] +
+        [
+            [types.KeyboardButton(text="🟢 НАЧАТЬ АРЕНДУ 🟢")],
+            [types.KeyboardButton(text="Посмотреть корзину")]
+        ],
+        resize_keyboard=True
+    )
 
 def cart_keyboard():
     return types.ReplyKeyboardMarkup(
@@ -590,126 +597,88 @@ async def select_quantity(message: types.Message):
         reply_markup=keyboard
     )
 
-@dp.callback_query(F.data == "view_cart")
-async def view_cart(callback_query: types.CallbackQuery):
-    user_id = callback_query.from_user.id
+@dp.message(F.text == "Посмотреть корзину")
+async def view_cart(message: types.Message):
+    user_id = message.from_user.id
+    data = user_rent_data.get(user_id)
+    if not data or not data["cart"]:
+        await message.answer("Ваша корзина пуста! Добавьте велосипеды для аренды.", reply_markup=categories_keyboard())
+        return
+    cart_str = "\n".join([
+        f"{bike_categories[cat]['emoji']} <b>{cat}</b>: {cnt} шт. ({bike_categories[cat]['hour']}₽/ч)"
+        for cat, cnt in data["cart"].items()
+    ])
+    total_hour_price = sum([bike_categories[cat]['hour'] * cnt for cat, cnt in data["cart"].items()])
+    await message.answer(
+        f"В вашей корзине:\n{cart_str}\n━━━━━━━━━━━━━━━━━━━━\n<b>Общая стоимость за 1 час: {total_hour_price}₽</b>",
+        reply_markup=cart_keyboard()
+    )
+
+@dp.message(F.text == "Очистить корзину")
+async def clear_cart(message: types.Message):
+    user_id = message.from_user.id
+    if user_id in user_rent_data:
+        user_rent_data[user_id]["cart"] = {}
+        user_rent_data[user_id]["is_renting"] = False
+        user_rent_data[user_id]["start_time"] = None
+    keyboard = categories_keyboard()
+    await message.answer("Корзина очищена! Можете выбрать велосипеды снова.", reply_markup=keyboard)
+
+
+@dp.message(F.text == "🟢 НАЧАТЬ АРЕНДУ 🟢")
+async def start_rent_preview(message: types.Message):
+    user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
     if not data or not data["cart"]:
-        await callback_query.answer("Ваша корзина пуста!")
+        await message.answer("Сначала выберите хотя бы один велосипед.")
         return
 
-    cart_str = "\n".join([f"{bike_categories[cat]['emoji']} <b>{cat}</b>: {cnt} шт. ({bike_categories[cat]['hour']}₽/ч)"
-                          for cat, cnt in data["cart"].items()])
+    cart_str = "\n".join([
+        f"{bike_categories[cat]['emoji']} <b>{cat}</b>: {cnt} шт. ({bike_categories[cat]['hour']}₽/ч)"
+        for cat, cnt in data["cart"].items()
+    ])
     total_hour_price = sum([bike_categories[cat]['hour'] * cnt for cat, cnt in data["cart"].items()])
 
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🟢 НАЧАТЬ АРЕНДУ 🟢", callback_data="start_rent")],
-        [InlineKeyboardButton(text="Очистить корзину", callback_data="clear_cart")]
-    ])
-
-    await callback_query.message.edit_text(
-        f"В вашей корзине:\n{cart_str}\n━━━━━━━━━━━━━━━━━━━━\n"
-        f"<b>Общая стоимость за 1 час: {total_hour_price}₽</b>",
-        reply_markup=keyboard
+    await message.answer(
+        "Прежде чем поехать, проверьте велосипед и убедитесь, что всё работает:\n"
+        "- Тормоза и шины.\n"
+        "- Сиденье под ваш рост.\n\n"
+        "<b><u>Теперь соблюдайте эти простые правила безопасности:</u></b>\n"
+        "- <b>Будьте внимательны!</b> Следите за дорогой.\n"
+        "- <b>Не гоните!</b> Наслаждайтесь поездкой.\n"
+        "- <b>Осторожно на подъёмах и спусках.</b> Дороги могут быть неровными.\n"
+        "- <b>Берегите велосипед.</b> Возвращайте его в хорошем состоянии.\n\n"
     )
 
-@dp.callback_query(F.data == "clear_cart")
-async def clear_cart(callback_query: types.CallbackQuery):
-    user_id = callback_query.from_user.id
-    user_rent_data[user_id]["cart"] = {}
-    keyboard = categories_inline_keyboard()
-    await callback_query.message.edit_text(
-        "Корзина очищена! Выберите, что делать дальше:",
-        reply_markup=keyboard
-    )
-
-@dp.callback_query(F.data == "start_rent")
-async def start_rent(callback_query: types.CallbackQuery):
-    user_id = callback_query.from_user.id
-    data = user_rent_data.get(user_id)
-
-    if not data or not data["cart"]:
-        await callback_query.answer("Ваша корзина пуста! Добавьте хотя бы один велосипед.")
-        return
-
-    cart_str = "\n".join([f"{bike_categories[cat]['emoji']} <b>{cat}</b>: {cnt} шт. ({bike_categories[cat]['hour']}₽/ч)"
-                          for cat, cnt in data["cart"].items()])
-    total_hour_price = sum([bike_categories[cat]['hour'] * cnt for cat, cnt in data["cart"].items()])
-
-    # Отправляем текст и кнопки подтверждения аренды
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="✅ Подтвердить аренду", callback_data="confirm_rent")],
-        [InlineKeyboardButton(text="↩️ Вернуться к выбору", callback_data="back_to_cart")]
-    ])
-
-    await callback_query.message.edit_text(
+    await message.answer(
         f"Вы выбрали:\n{cart_str}\n━━━━━━━━━━━━━━━━━━━━\n"
-        f"💸 Стоимость за 1 час: {total_hour_price}₽\n\n"
+        f"<b>💸 Стоимость за 1 час: {total_hour_price} руб.</b>\n\n"
         "Для оформления аренды нажмите на кнопку ниже 👇",
-        reply_markup=keyboard
+        reply_markup=contact_keyboard()
     )
-    
-@dp.callback_query(F.data.startswith("select_category_"))
-async def select_category(callback_query: types.CallbackQuery):
-    category = callback_query.data.split("_", 2)[2]  # Извлекаем категорию
-    user_id = callback_query.from_user.id
+    data["asked_phone"] = True
+
+
+@dp.callback_query(F.data == "back_to_cart")
+async def back_to_cart(callback: types.CallbackQuery):
+    # Убираем только кнопки "Подтвердить аренду" и "Вернуться к выбору"
+    await callback.message.edit_reply_markup(reply_markup=None)
+
+    # Показываем корзину снова
+    user_id = callback.from_user.id
     data = user_rent_data.get(user_id)
 
-    if not data:
-        await callback_query.answer("Ошибка! Начните аренду снова.")
+    if not data or not data["cart"]:
+        await callback.message.answer("Ваша корзина пуста! Добавьте велосипеды для аренды.", reply_markup=categories_keyboard())
         return
 
-    # Логика добавления выбранной категории в корзину
-    if category not in data["cart"]:
-        data["cart"][category] = 0
-    data["awaiting_quantity"] = True
-    data["last_category"] = category
+    cart_str = "\n".join([f"{bike_categories[cat]['emoji']} <b>{cat}</b>: {cnt} шт. ({bike_categories[cat]['hour']}₽/ч)" for cat, cnt in data["cart"].items()])
+    total_hour_price = sum([bike_categories[cat]['hour'] * cnt for cat, cnt in data["cart"].items()])
 
-    # Клавиатура для выбора количества
-    qty_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=str(qty), callback_data=f"set_quantity_{qty}")]
-        for qty in QUANTITY_CHOICES
-    ] + [
-        [InlineKeyboardButton(text="Назад", callback_data="back_to_categories")]
-    ])
-
-    await callback_query.message.edit_text(
-        f"Вы выбрали: {bike_categories[category]['emoji']} {category} ({bike_categories[category]['hour']}₽/ч)\n\n"
-        "Сколько добавить в корзину?",
-        reply_markup=qty_keyboard
-    )
-
-@dp.callback_query(F.data.startswith("set_quantity_"))
-async def set_quantity(callback_query: types.CallbackQuery):
-    quantity = int(callback_query.data.split("_", 2)[2])  # Извлекаем количество
-    user_id = callback_query.from_user.id
-    data = user_rent_data.get(user_id)
-
-    if not data or not data["last_category"]:
-        await callback_query.answer("Ошибка! Выберите категорию велосипеда.")
-        return
-
-    # Добавляем выбранное количество в корзину
-    category = data["last_category"]
-    data["cart"][category] += quantity
-    data["awaiting_quantity"] = False
-    data["last_category"] = None
-
-    # Кнопки для дальнейших действий
-    keyboard = categories_inline_keyboard()
-    await callback_query.message.edit_text(
-        f"Добавлено {quantity} шт. {bike_categories[category]['emoji']} {category} в корзину.\n\n"
-        "Выберите, что делать дальше:",
-        reply_markup=keyboard
-    )
-
-@dp.callback_query(F.data == "back_to_categories")
-async def back_to_categories(callback_query: types.CallbackQuery):
-    keyboard = categories_inline_keyboard()
-    await callback_query.message.edit_text(
-        "Выберите категорию велосипеда для аренды:",
-        reply_markup=keyboard
+    await callback.message.answer(
+        f"В вашей корзине:\n{cart_str}\n━━━━━━━━━━━━━━━━━━━━\n<b>Общая стоимость за 1 час: {total_hour_price}₽</b>",
+        reply_markup=cart_keyboard()  # Возвращаем клавиатуру корзины
     )
 
 @dp.message(lambda m: m.contact is not None)
