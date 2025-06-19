@@ -151,13 +151,6 @@ bot = Bot(
 )
 dp = Dispatcher()
 
-async def set_user_commands(bot):
-    commands = [
-        types.BotCommand(command="start", description="Запустить бота"),
-        types.BotCommand(command="help", description="Справка"),
-        # Только публичные команды!
-    ]
-    await bot.set_my_commands(commands, scope=types.BotCommandScopeDefault())
 
 async def set_admin_commands(bot, admin_id):
     commands = [
