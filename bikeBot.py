@@ -3,6 +3,7 @@ from aiogram import Bot, Dispatcher, types, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.types import FSInputFile
 from datetime import datetime, date
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 import json
 import pytz
 import os
@@ -140,6 +141,18 @@ bike_categories = {
     'Прогулочный': {"hour": 200, "emoji": "🚲", "img": "images/City.jpg"},
     'Скоростной':  {"hour": 250, "emoji": "🚵", "img": "images/Sport.jpg"},
 }
+
+places = [
+    {"title": "Место 1", "description": "История о месте 1"},
+    {"title": "Место 2", "description": "История о месте 2"},
+    {"title": "Место 3", "description": "История о месте 3"},
+    {"title": "Место 4", "description": "История о месте 4"},
+    {"title": "Место 5", "description": "История о месте 5"},
+    {"title": "Место 6", "description": "История о месте 6"},
+    {"title": "Место 7", "description": "История о месте 7"},
+    {"title": "Место 8", "description": "История о месте 8"},
+    {"title": "Место 9", "description": "История о месте 9"},
+]
 
 QUANTITY_CHOICES = [1, 2, 3, 4, 5]
 user_rent_data = {}
@@ -498,20 +511,22 @@ async def time_spent(message: types.Message):
             reply_markup=main_menu_keyboard()
         )
 
-@dp.message(F.text == "Арендовать велосипед")
-async def start_rent_button(message: types.Message):
+@dp.message(F.text == "🗺 Что посмотреть?")
+async def show_map(message: types.Message):
     user_id = message.from_user.id
-    user_rent_data[user_id] = {
-        "cart": {},
-        "start_time": None,
-        "awaiting_quantity": False,
-        "last_category": None,
-        "is_renting": False,
-        "phone": None,
-        "asked_phone": False,
-    }
-    keyboard = categories_keyboard()
-    await message.answer("Выберите категорию велосипеда для добавления в корзину:", reply_markup=keyboard)
+    
+    # Создание клавиатуры с 9 кнопками
+    keyboard = InlineKeyboardMarkup(row_width=3)
+    
+    for i, place in enumerate(places):
+        keyboard.add(InlineKeyboardButton(text=place["title"], callback_data=f"place_{i}"))
+    
+    # Отправка изображения с маршрутом и клавиатуры с кнопками
+    await message.answer_photo(
+        photo=open("images/route_map.jpg", "rb"),  # Путь к изображению
+        caption="Вот маршрут по Балтийской Косе! Выберите место, чтобы узнать о нем больше:",
+        reply_markup=keyboard
+    )
 
 @dp.message(lambda m: any(m.text and m.text.startswith(bike_categories[cat]['emoji']) for cat in bike_categories))
 async def select_category(message: types.Message):
@@ -919,6 +934,22 @@ async def status_time_active(message: types.Message):
             "Нажмите 'Завершить аренду', когда закончите кататься.",
             reply_markup=during_rent_keyboard()
         )
+
+# Обработчик для нажатия на кнопки
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith("place_"))
+async def send_place_info(callback_query: types.CallbackQuery):
+    # Получаем индекс места
+    place_index = int(callback_query.data.split("_")[1])
+    place = places[place_index]
+    
+    # Отправляем информацию о месте
+    await callback_query.message.answer(
+        f"<b>{place['title']}</b>\n\n{place['description']}",
+        parse_mode="HTML"
+    )
+    
+    # Закрытие callback
+    await callback_query.answer()
 
 # --- Общий обработчик на случайный текст --- #
 @dp.message()
