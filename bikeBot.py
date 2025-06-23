@@ -751,7 +751,7 @@ async def start_rent_real(message: types.Message):
         pass
         #await logger.info(f"Не удалось отправить уведомление админу (начало): {e}")
 
-@dp.message(F.text == "🗺 Что посмотреть?")
+@router.message(F.text == "🗺 Что посмотреть?")
 async def show_map(message: types.Message):
     user_id = message.from_user.id
     
@@ -935,8 +935,8 @@ async def status_time_active(message: types.Message):
             reply_markup=during_rent_keyboard()
         )
 
-@dp.callback_query_handler(lambda c: c.data and c.data.startswith("place_"))
-async def send_place_info(callback_query: types.CallbackQuery):
+@router.callback_query(lambda c: c.data and c.data.startswith("place_"))
+async def send_place_info(callback_query: CallbackQuery):
     place_index = int(callback_query.data.split("_")[1])
     place = places[place_index]
     
