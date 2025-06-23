@@ -741,6 +741,19 @@ async def start_rent_real(message: types.Message):
         pass
         #await logger.info(f"Не удалось отправить уведомление админу (начало): {e}")
 
+@dp.message(F.text == "🗺 Что посмотреть?")
+async def interesting_places(message: types.Message):
+    user_id = message.from_user.id
+    data = user_rent_data.get(user_id)  # Получаем данные о пользователе
+
+    if data and data.get("is_renting"):  # Проверяем, что аренда активна
+        # Генерация или получение маршрута интересных мест
+        route = "Ваш маршрут по интересным местам:\n1. Место 1\n2. Место 2\n3. Место 3"  # Пример маршрута
+        await message.answer(route, reply_markup=during_rent_keyboard())  # Отправляем маршрут с клавиатурой
+    else:
+        await message.answer("Ошибка! Аренда не активна. Пожалуйста, начните аренду.", reply_markup=main_menu_keyboard())  # Если аренда не активна
+
+
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
     user_id = message.from_user.id
