@@ -211,8 +211,8 @@ def cart_keyboard():
 def during_rent_keyboard():
     return types.ReplyKeyboardMarkup(
         keyboard=[
-            [types.KeyboardButton(text="🗺 Что посмотреть?")]
-            [types.KeyboardButton(text="📞 Поддержка")]  # Кнопка для поддержки
+            [types.KeyboardButton(text="🗺 Что посмотреть?")],
+            [types.KeyboardButton(text="📞 Поддержка")],  # Кнопка для поддержки
             [types.KeyboardButton(text="⏱ Сколько времени катаюсь?")],  # Кнопка для времени
             [types.KeyboardButton(text="🔴 Завершить аренду")],  # Кнопка для завершения аренды
         ],
