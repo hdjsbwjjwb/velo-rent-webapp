@@ -211,26 +211,21 @@ def cart_keyboard():
 def during_rent_keyboard():
     return types.ReplyKeyboardMarkup(
         keyboard=[
-            [types.KeyboardButton(text="🔴 Завершить аренду")],  # Кнопка для завершения аренды
-            [types.KeyboardButton(text="⏱ Сколько времени катаюсь?")],  # Кнопка для времени
+            [types.KeyboardButton(text="🗺 Что посмотреть?")]
             [types.KeyboardButton(text="📞 Поддержка")]  # Кнопка для поддержки
+            [types.KeyboardButton(text="⏱ Сколько времени катаюсь?")],  # Кнопка для времени
+            [types.KeyboardButton(text="🔴 Завершить аренду")],  # Кнопка для завершения аренды
         ],
         resize_keyboard=True
     )
 
 def contact_keyboard():
     return types.ReplyKeyboardMarkup(
-        keyboard=[[types.KeyboardButton(text="✅ Отправить номер телефона ✅", request_contact=True)]],
+        keyboard=[[types.KeyboardButton(text="✅ Я соглашаюсь с правилами ✅", request_contact=True)]],
         resize_keyboard=True
     )
 
 # -------- Inline клавиатуры -------- #
-
-def confirm_rent_inline():
-    return types.InlineKeyboardMarkup(inline_keyboard=[
-        [types.InlineKeyboardButton(text="✅ Подтвердить аренду", callback_data="confirm_rent")],
-        [types.InlineKeyboardButton(text="↩️ Вернуться к выбору", callback_data="back_to_cart")]
-    ])
 
 
 # -------- Обработчики -------- #
