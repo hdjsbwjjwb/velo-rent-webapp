@@ -1008,7 +1008,7 @@ async def send_daily_report():
     await bot.send_message(ADMIN_ID, text)
 
 # Инициализация бота
-bot = Bot(token=TOKEN, parse_mode="HTML")
+bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
 dp = Dispatcher()
 
 # Интегрируем router в dispatcher
