@@ -515,15 +515,6 @@ async def time_spent(message: types.Message):
             reply_markup=main_menu_keyboard()
         )
 
-@router.message(F.text == "🗺 Что посмотреть?")
-async def show_map(message: types.Message):
-    user_id = message.from_user.id
-    
-    # Создание клавиатуры с 9 кнопками
-    keyboard = InlineKeyboardMarkup(row_width=3)
-    
-    for i, place in enumerate(places):
-        keyboard.add(InlineKeyboardButton(text=place["title"], callback_data=f"place_{i}"))
     
     # Отправка изображения с маршрутом и клавиатуры с кнопками
     await message.answer_photo(
@@ -761,18 +752,23 @@ async def start_rent_real(message: types.Message):
         #await logger.info(f"Не удалось отправить уведомление админу (начало): {e}")
 
 @dp.message(F.text == "🗺 Что посмотреть?")
-async def interesting_places(message: types.Message):
+async def show_map(message: types.Message):
     user_id = message.from_user.id
-    data = user_rent_data.get(user_id)  # Получаем данные о пользователе
-
-    if data and data.get("is_renting"):  # Проверяем, что аренда активна
-        # Генерация или получение маршрута интересных мест
-        route = "Ваш маршрут по интересным местам:\n1. Место 1\n2. Место 2\n3. Место 3"  # Пример маршрута
-        await message.answer(route, reply_markup=during_rent_keyboard())  # Отправляем маршрут с клавиатурой
-    else:
-        await message.answer("Ошибка! Аренда не активна. Пожалуйста, начните аренду.", reply_markup=main_menu_keyboard())  # Если аренда не активна
-
-
+    
+    # Создание клавиатуры с 9 кнопками
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[  # Важно использовать `inline_keyboard` вместо `row_width`
+            [InlineKeyboardButton(text=place["title"], callback_data=f"place_{i}") for i, place in enumerate(places)]
+        ]
+    )
+    
+    # Отправка изображения с маршрутом и клавиатуры с кнопками
+    await message.answer_photo(
+        photo=open("images/route_map.jpg", "rb"),  # Путь к изображению
+        caption="Вот маршрут по Балтийской Косе! Выберите место, чтобы узнать о нем больше:",
+        reply_markup=keyboard
+    )
+    
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
     user_id = message.from_user.id
@@ -939,9 +935,8 @@ async def status_time_active(message: types.Message):
             reply_markup=during_rent_keyboard()
         )
 
-
-@router.callback_query(lambda c: c.data and c.data.startswith("place_"))
-async def send_place_info(callback_query: CallbackQuery):
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith("place_"))
+async def send_place_info(callback_query: types.CallbackQuery):
     place_index = int(callback_query.data.split("_")[1])
     place = places[place_index]
     
