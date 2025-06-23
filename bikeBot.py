@@ -4,6 +4,8 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.types import FSInputFile
 from datetime import datetime, date
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram import Bot, Router, types
+from aiogram.types import CallbackQuery
 import json
 import pytz
 import os
@@ -133,6 +135,8 @@ SUPPORT_TEXT = (
     "Telegram: @realBalticBike\n"
     "E-mail: velo.prokat@internet.ru"
 )
+
+router = Router()
 
 PHONE_NUMBER = "+7 906 211-29-40"  # <-- номер для оплаты
 
@@ -511,7 +515,7 @@ async def time_spent(message: types.Message):
             reply_markup=main_menu_keyboard()
         )
 
-@dp.message(F.text == "🗺 Что посмотреть?")
+@router.message(F.text == "🗺 Что посмотреть?")
 async def show_map(message: types.Message):
     user_id = message.from_user.id
     
@@ -935,14 +939,13 @@ async def status_time_active(message: types.Message):
             reply_markup=during_rent_keyboard()
         )
 
-# Обработчик для нажатия на кнопки
-@dp.callback_query_handler(lambda c: c.data and c.data.startswith("place_"))
-async def send_place_info(callback_query: types.CallbackQuery):
-    # Получаем индекс места
+
+@router.callback_query(lambda c: c.data and c.data.startswith("place_"))
+async def send_place_info(callback_query: CallbackQuery):
     place_index = int(callback_query.data.split("_")[1])
     place = places[place_index]
     
-    # Отправляем информацию о месте
+    # Отправляем описание места
     await callback_query.message.answer(
         f"<b>{place['title']}</b>\n\n{place['description']}",
         parse_mode="HTML"
@@ -1004,6 +1007,12 @@ async def send_daily_report():
     )
     await bot.send_message(ADMIN_ID, text)
 
+# Инициализация бота
+bot = Bot(token=TOKEN, parse_mode="HTML")
+dp = Dispatcher()
+
+# Интегрируем router в dispatcher
+dp.include_router(router)
 
 async def main():
     await set_user_commands(bot)
