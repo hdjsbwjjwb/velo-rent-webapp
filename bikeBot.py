@@ -948,9 +948,10 @@ async def handle_place(callback: types.CallbackQuery):
     user_id = callback.from_user.id
     message_id = user_rent_data.get(user_id, {}).get("message_id")
 
+    # Проверяем, если уже есть сообщение, которое нужно отредактировать
     if message_id:
         try:
-            # Попытка отредактировать текст или caption, не используя get_message
+            # Если сообщение найдено, редактируем его (не отправляем новое)
             if callback.message.photo:
                 # Если это фото, редактируем caption
                 await callback.message.edit_caption(
@@ -972,13 +973,17 @@ async def handle_place(callback: types.CallbackQuery):
             )
     else:
         # Если сообщение не найдено, отправляем новое
-        await callback.message.answer(
+        sent_message = await callback.message.answer(
             place_description,
             reply_markup=create_places_keyboard()  # Клавиатура с кнопками
         )
 
+        # Сохраняем message_id для дальнейших редактирований
+        user_rent_data[user_id] = {"message_id": sent_message.message_id}
+
     # Подтверждаем, что кнопка была нажата
     await callback.answer()
+
 
 
 # --- Показываем время аренды, если аренда активна --- #
