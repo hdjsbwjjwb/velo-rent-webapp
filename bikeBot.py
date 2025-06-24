@@ -243,16 +243,14 @@ def contact_keyboard():
 
 # -------- Inline клавиатуры -------- #
 def create_places_keyboard():
-    # Создаем список кнопок, используя правильные именованные аргументы
+    # Создаем список кнопок с правильными именами аргументов
     inline_buttons = [
         InlineKeyboardButton(text=f"Место {i}", callback_data=f"place_{i}") for i in range(1, 10)
     ]
     
-    # Создаем клавиатуру и добавляем кнопки
+    # Создаем клавиатуру и указываем список кнопок
     keyboard = InlineKeyboardMarkup(row_width=3)  # Устанавливаем количество кнопок в ряду
-
-    # Указываем кнопки в формате списка
-    keyboard.add(*inline_buttons)  # Добавляем все кнопки
+    keyboard.inline_keyboard = [inline_buttons]  # Передаем кнопки в параметр inline_keyboard
 
     return keyboard
 # -------- Обработчики -------- #
@@ -784,6 +782,7 @@ async def interesting_places(message: types.Message):
 
     # Сохраняем id сообщения для дальнейшего редактирования
     user_rent_data[message.from_user.id] = {"message_id": sent_message.message_id}
+
     
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
@@ -953,15 +952,15 @@ async def handle_place(callback: types.CallbackQuery):
             reply_markup=create_places_keyboard()  # Клавиатура с кнопками
         )
     else:
-        # Если сообщение не найдено (по какой-то причине), отправляем новое
+        # Если сообщение не найдено, отправляем новое
         await callback.message.answer(
             place_description,
-            reply_markup=create_places_keyboard()
+            reply_markup=create_places_keyboard()  # Клавиатура с кнопками
         )
 
     # Подтверждаем, что кнопка была нажата
     await callback.answer()
-    
+
 # --- Показываем время аренды, если аренда активна --- #
 @dp.message(lambda m: m.from_user.id in user_rent_data and user_rent_data[m.from_user.id].get("is_renting"))
 async def status_time_active(message: types.Message):
