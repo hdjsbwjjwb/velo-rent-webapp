@@ -747,6 +747,14 @@ async def send_map_and_buttons(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
+    # Проверяем, что нет активной аренды, если есть, не обрабатываем запрос
+    if data.get("is_renting"):
+        await message.answer(
+            "Ошибка! Ваша аренда всё ещё активна. Завершите аренду, чтобы выбрать что посмотреть.",
+            reply_markup=during_rent_keyboard()
+        )
+        return
+
     # Отправляем сообщение с картой и клавишами, если оно ещё не отправлено
     if "map_message_id" not in data:
         photo_path = "/path/to/your/map_image.png"  # Путь к карте
