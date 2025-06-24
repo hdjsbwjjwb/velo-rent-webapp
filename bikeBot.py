@@ -950,31 +950,32 @@ async def handle_place(callback: types.CallbackQuery):
 
     if message_id:
         try:
-            # Получаем сообщение с помощью edit_message_text
-            sent_message = await callback.message.bot.edit_message_text(
-                place_description,  # Описание выбранного места
-                chat_id=callback.message.chat.id,
-                message_id=message_id,  # ID сообщения, которое нужно отредактировать
-                reply_markup=create_places_keyboard()  # Клавиатура с кнопками
-            )
+            # Попытка отредактировать текст или caption, не используя get_message
+            if callback.message.photo:
+                # Если это фото, редактируем caption
+                await callback.message.edit_caption(
+                    caption=place_description,  # Описание выбранного места
+                    reply_markup=create_places_keyboard()  # Клавиатура с кнопками
+                )
+            else:
+                # Если это текстовое сообщение, редактируем текст
+                await callback.message.edit_text(
+                    place_description,  # Описание выбранного места
+                    reply_markup=create_places_keyboard()  # Клавиатура с кнопками
+                )
         except Exception as e:
             print(f"Ошибка при редактировании сообщения: {e}")
             # В случае ошибки отправляем новое сообщение
-            sent_message = await callback.message.answer(
+            await callback.message.answer(
                 place_description,
                 reply_markup=create_places_keyboard()  # Клавиатура с кнопками
             )
-            # Сохраняем message_id для дальнейших редактирований
-            user_rent_data[user_id] = {"message_id": sent_message.message_id}
     else:
         # Если сообщение не найдено, отправляем новое
-        sent_message = await callback.message.answer(
+        await callback.message.answer(
             place_description,
             reply_markup=create_places_keyboard()  # Клавиатура с кнопками
         )
-
-        # Сохраняем message_id для дальнейших редактирований
-        user_rent_data[user_id] = {"message_id": sent_message.message_id}
 
     # Подтверждаем, что кнопка была нажата
     await callback.answer()
