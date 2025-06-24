@@ -765,7 +765,7 @@ async def start_rent_real(message: types.Message):
 @dp.message(F.text == "🗺 Что посмотреть?")
 async def interesting_places(message: types.Message):
     # Отправляем карту (сначала отправляем картинку с маршрутом)
-    photo_path = "path_to_map_with_route.jpg"  # Убедитесь, что путь к изображению верный
+    photo_path = "images/route_map.jpg"  # Убедитесь, что путь к изображению верный
     photo = FSInputFile(photo_path)
 
     # Отправляем изображение карты
