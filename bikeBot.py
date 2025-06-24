@@ -747,14 +747,14 @@ async def send_map_and_buttons(message: types.Message):
     data = user_rent_data.get(user_id)
 
     if data and data.get("is_renting"):
-        # Отправляем карту с маршрутом
-        photo_path = "images/route_map.jpg"  # Убедитесь, что указали правильный путь к изображению карты
+        # Отправляем карту с маршрутом и клавиатуру
+        photo_path = "path_to_your_map_image.png"  # Убедитесь, что указали правильный путь к изображению карты
         sent_message = await message.answer_photo(
             FSInputFile(photo_path),
             caption="Вот карта с маршрутом. Выберите место, которое хотите посетить!"
         )
 
-        # Сохраняем ID сообщения, чтобы потом редактировать
+        # Сохраняем ID сообщения с картой, чтобы потом редактировать
         data['map_message_id'] = sent_message.message_id
 
         # Создаем клавиатуру с 9 кнопками для разных мест
@@ -773,27 +773,33 @@ async def send_map_and_buttons(message: types.Message):
             resize_keyboard=True
         )
 
+        # Отправляем клавиатуру с местами
         await message.answer("Выберите место на маршруте:", reply_markup=keyboard)
 
     else:
         await message.answer("Ошибка! Аренда не активна. Пожалуйста, начните аренду.", reply_markup=main_menu_keyboard())
 
+# Обработчик для Место 1
 @dp.message(F.text == "Место 1")
 async def place_1(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
     if data and data.get("map_message_id"):
-        # Новый текст для редактирования
         place_info = "📍 Место 1: Природный парк Куршская коса.\n\nУникальное природное место с песчаными дюнами и лесами, идеальное для прогулок на велосипеде."
 
-        # Редактируем сообщение с картой и добавляем описание места
-        await bot.edit_message_text(
-            place_info,
-            chat_id=message.chat.id,
-            message_id=data['map_message_id']
-        )
+        try:
+            await bot.edit_message_text(
+                place_info,
+                chat_id=message.chat.id,
+                message_id=data['map_message_id']
+            )
+        except aiogram.exceptions.TelegramBadRequest as e:
+            print(f"Ошибка при редактировании сообщения: {e}")
+            await message.answer("Не удалось отредактировать сообщение.")
 
+
+# Обработчик для Место 2
 @dp.message(F.text == "Место 2")
 async def place_2(message: types.Message):
     user_id = message.from_user.id
@@ -802,117 +808,155 @@ async def place_2(message: types.Message):
     if data and data.get("map_message_id"):
         place_info = "📍 Место 2: Маяк на Балтийской косе.\n\nЗнаменитый маяк с потрясающим видом на море. Отличное место для отдыха и фотосессий."
 
-        # Редактируем сообщение с картой и добавляем описание места
-        await bot.edit_message_text(
-            place_info,
-            chat_id=message.chat.id,
-            message_id=data['map_message_id']
-        )
+        try:
+            await bot.edit_message_text(
+                place_info,
+                chat_id=message.chat.id,
+                message_id=data['map_message_id']
+            )
+        except aiogram.exceptions.TelegramBadRequest as e:
+            print(f"Ошибка при редактировании сообщения: {e}")
+            await message.answer("Не удалось отредактировать сообщение.")
 
+
+# Обработчик для Место 3
 @dp.message(F.text == "Место 3")
-async def place_2(message: types.Message):
+async def place_3(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
     if data and data.get("map_message_id"):
-        place_info = "📍 Место 3: Маяк на Балтийской косе.\n\nЗнаменитый маяк с потрясающим видом на море. Отличное место для отдыха и фотосессий."
+        place_info = "📍 Место 3: Скалы в Балтийске.\n\nПрекрасный природный объект с великолепными видами на Балтийское море. Отличное место для любителей природы."
 
-        # Редактируем сообщение с картой и добавляем описание места
-        await bot.edit_message_text(
-            place_info,
-            chat_id=message.chat.id,
-            message_id=data['map_message_id']
-        )
+        try:
+            await bot.edit_message_text(
+                place_info,
+                chat_id=message.chat.id,
+                message_id=data['map_message_id']
+            )
+        except aiogram.exceptions.TelegramBadRequest as e:
+            print(f"Ошибка при редактировании сообщения: {e}")
+            await message.answer("Не удалось отредактировать сообщение.")
 
+
+# Обработчик для Место 4
 @dp.message(F.text == "Место 4")
-async def place_2(message: types.Message):
+async def place_4(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
     if data and data.get("map_message_id"):
-        place_info = "📍 Место 4: Маяк на Балтийской косе.\n\nЗнаменитый маяк с потрясающим видом на море. Отличное место для отдыха и фотосессий."
+        place_info = "📍 Место 4: Кафе на пляже.\n\nПриятное место для отдыха после поездки на велосипеде. Отдохните с видом на море."
 
-        # Редактируем сообщение с картой и добавляем описание места
-        await bot.edit_message_text(
-            place_info,
-            chat_id=message.chat.id,
-            message_id=data['map_message_id']
-        )
+        try:
+            await bot.edit_message_text(
+                place_info,
+                chat_id=message.chat.id,
+                message_id=data['map_message_id']
+            )
+        except aiogram.exceptions.TelegramBadRequest as e:
+            print(f"Ошибка при редактировании сообщения: {e}")
+            await message.answer("Не удалось отредактировать сообщение.")
 
+
+# Обработчик для Место 5
 @dp.message(F.text == "Место 5")
-async def place_2(message: types.Message):
+async def place_5(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
     if data and data.get("map_message_id"):
-        place_info = "📍 Место 5: Маяк на Балтийской косе.\n\nЗнаменитый маяк с потрясающим видом на море. Отличное место для отдыха и фотосессий."
+        place_info = "📍 Место 5: Природные тропы.\n\nОтличные тропы для прогулок на велосипеде с природными пейзажами и лесами."
 
-        # Редактируем сообщение с картой и добавляем описание места
-        await bot.edit_message_text(
-            place_info,
-            chat_id=message.chat.id,
-            message_id=data['map_message_id']
-        )
+        try:
+            await bot.edit_message_text(
+                place_info,
+                chat_id=message.chat.id,
+                message_id=data['map_message_id']
+            )
+        except aiogram.exceptions.TelegramBadRequest as e:
+            print(f"Ошибка при редактировании сообщения: {e}")
+            await message.answer("Не удалось отредактировать сообщение.")
 
+
+# Обработчик для Место 6
 @dp.message(F.text == "Место 6")
-async def place_2(message: types.Message):
+async def place_6(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
     if data and data.get("map_message_id"):
-        place_info = "📍 Место 6: Маяк на Балтийской косе.\n\nЗнаменитый маяк с потрясающим видом на море. Отличное место для отдыха и фотосессий."
+        place_info = "📍 Место 6: Дюны Куршской косы.\n\nПотрясающие песчаные дюны, идеально подходящие для прогулок на велосипеде."
 
-        # Редактируем сообщение с картой и добавляем описание места
-        await bot.edit_message_text(
-            place_info,
-            chat_id=message.chat.id,
-            message_id=data['map_message_id']
-        )
+        try:
+            await bot.edit_message_text(
+                place_info,
+                chat_id=message.chat.id,
+                message_id=data['map_message_id']
+            )
+        except aiogram.exceptions.TelegramBadRequest as e:
+            print(f"Ошибка при редактировании сообщения: {e}")
+            await message.answer("Не удалось отредактировать сообщение.")
 
+
+# Обработчик для Место 7
 @dp.message(F.text == "Место 7")
-async def place_2(message: types.Message):
+async def place_7(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
     if data and data.get("map_message_id"):
-        place_info = "📍 Место 7: Маяк на Балтийской косе.\n\nЗнаменитый маяк с потрясающим видом на море. Отличное место для отдыха и фотосессий."
+        place_info = "📍 Место 7: Маяк в Светлогорске.\n\nУникальный маяк с невероятным видом на Балтийское море."
 
-        # Редактируем сообщение с картой и добавляем описание места
-        await bot.edit_message_text(
-            place_info,
-            chat_id=message.chat.id,
-            message_id=data['map_message_id']
-        )
+        try:
+            await bot.edit_message_text(
+                place_info,
+                chat_id=message.chat.id,
+                message_id=data['map_message_id']
+            )
+        except aiogram.exceptions.TelegramBadRequest as e:
+            print(f"Ошибка при редактировании сообщения: {e}")
+            await message.answer("Не удалось отредактировать сообщение.")
 
+
+# Обработчик для Место 8
 @dp.message(F.text == "Место 8")
-async def place_2(message: types.Message):
+async def place_8(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
     if data and data.get("map_message_id"):
-        place_info = "📍 Место 8: Маяк на Балтийской косе.\n\nЗнаменитый маяк с потрясающим видом на море. Отличное место для отдыха и фотосессий."
+        place_info = "📍 Место 8: Краеведческий музей.\n\nИнтересный музей с экспонатами местной истории."
 
-        # Редактируем сообщение с картой и добавляем описание места
-        await bot.edit_message_text(
-            place_info,
-            chat_id=message.chat.id,
-            message_id=data['map_message_id']
-        )
+        try:
+            await bot.edit_message_text(
+                place_info,
+                chat_id=message.chat.id,
+                message_id=data['map_message_id']
+            )
+        except aiogram.exceptions.TelegramBadRequest as e:
+            print(f"Ошибка при редактировании сообщения: {e}")
+            await message.answer("Не удалось отредактировать сообщение.")
 
+
+# Обработчик для Место 9
 @dp.message(F.text == "Место 9")
-async def place_2(message: types.Message):
+async def place_9(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
     if data and data.get("map_message_id"):
-        place_info = "📍 Место 9: Маяк на Балтийской косе.\n\nЗнаменитый маяк с потрясающим видом на море. Отличное место для отдыха и фотосессий."
+        place_info = "📍 Место 9: Центральная площадь.\n\nЦентр города с отличным видом на архитектуру и площади."
 
-        # Редактируем сообщение с картой и добавляем описание места
-        await bot.edit_message_text(
-            place_info,
-            chat_id=message.chat.id,
-            message_id=data['map_message_id']
-        )
+        try:
+            await bot.edit_message_text(
+                place_info,
+                chat_id=message.chat.id,
+                message_id=data['map_message_id']
+            )
+        except aiogram.exceptions.TelegramBadRequest as e:
+            print(f"Ошибка при редактировании сообщения: {e}")
+            await message.answer("Не удалось отредактировать сообщение.")
 
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
