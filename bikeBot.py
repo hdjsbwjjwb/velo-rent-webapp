@@ -749,7 +749,7 @@ async def send_map_and_buttons(message: types.Message):
 
     # Отправляем сообщение с картой и клавишами, если оно ещё не отправлено
     if "map_message_id" not in data:
-        photo_path = "images/route_map.jpg"  # Путь к карте
+        photo_path = "/path/to/your/map_image.png"  # Путь к карте
 
         # Отправляем карту с текстом и кнопками для всех мест
         sent_message = await message.answer_photo(
