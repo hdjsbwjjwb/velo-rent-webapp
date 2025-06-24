@@ -1,7 +1,6 @@
 import asyncio
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.client.default import DefaultBotProperties
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.types import FSInputFile
 from datetime import datetime, date
 import json
@@ -152,19 +151,6 @@ bot = Bot(
 )
 dp = Dispatcher()
 
-# Список точек маршрута (например, 9 точек с информацией о месте)
-places_info = {
-    1: "Место 1: Описание места 1",
-    2: "Место 2: Описание места 2",
-    3: "Место 3: Описание места 3",
-    4: "Место 4: Описание места 4",
-    5: "Место 5: Описание места 5",
-    6: "Место 6: Описание места 6",
-    7: "Место 7: Описание места 7",
-    8: "Место 8: Описание места 8",
-    9: "Место 9: Описание места 9",
-}
-
 async def set_user_commands(bot):
     commands = [
         types.BotCommand(command="support", description="Поддержка"),
@@ -221,13 +207,11 @@ def cart_keyboard():
         resize_keyboard=True
     )
 
-
-
 # Клавиатура во время аренды
 def during_rent_keyboard():
     return types.ReplyKeyboardMarkup(
         keyboard=[
-            [types.KeyboardButton(text="🗺 Что посмотреть?")],
+           # [types.KeyboardButton(text="🗺 Что посмотреть?")],
             [types.KeyboardButton(text="📞 Поддержка")],  # Кнопка для поддержки
             [types.KeyboardButton(text="⏱ Сколько времени катаюсь?")],  # Кнопка для времени
             [types.KeyboardButton(text="🔴 Завершить аренду")],  # Кнопка для завершения аренды
@@ -242,20 +226,8 @@ def contact_keyboard():
     )
 
 # -------- Inline клавиатуры -------- #
-def create_places_keyboard():
-    # Сначала создаем список кнопок
-    inline_buttons = [
-        InlineKeyboardButton(text=f"Место {i}", callback_data=f"place_{i}") for i in range(1, 10)
-    ]
-    
-    # Убедимся, что inline_keyboard передается корректно
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[  # Убедитесь, что это передается как список списков
-            inline_buttons[i:i + 3] for i in range(0, len(inline_buttons), 3)
-        ]
-    )
 
-    return keyboard
+
 # -------- Обработчики -------- #
 
 @dp.message(F.text == "/start")
@@ -771,33 +743,17 @@ async def start_rent_real(message: types.Message):
 
 @dp.message(F.text == "🗺 Что посмотреть?")
 async def interesting_places(message: types.Message):
-    print("Кнопка 'Что посмотреть?' была нажата.")  # Логируем нажатие кнопки
+    user_id = message.from_user.id
+    data = user_rent_data.get(user_id)  # Получаем данные о пользователе
 
-    # Отправляем изображение карты
-    photo_path = "images/route_map.jpg"  # Убедитесь, что путь к изображению правильный
-    photo = FSInputFile(photo_path)
+    if data and data.get("is_renting"):  # Проверяем, что аренда активна
+        # Генерация или получение маршрута интересных мест
+        route = "Ваш маршрут по интересным местам:\n1. Место 1\n2. Место 2\n3. Место 3"  # Пример маршрута
+        await message.answer(route, reply_markup=during_rent_keyboard())  # Отправляем маршрут с клавиатурой
+    else:
+        await message.answer("Ошибка! Аренда не активна. Пожалуйста, начните аренду.", reply_markup=main_menu_keyboard())  # Если аренда не активна
 
-    # Отправляем изображение карты с клавиатурой
-    map_message = await message.answer_photo(
-        photo,
-        caption="Вот ваш маршрут с интересными местами. Нажмите на кнопку, чтобы узнать больше!",
-        reply_markup=create_places_keyboard()  # Клавиатура с кнопками для мест
-    )
 
-    # Отправляем второе сообщение с рандомным текстом
-    random_message = await message.answer(
-        "Выберите место, чтобы увидеть его описание.",  # Рандомный текст
-        reply_markup=None  # Без кнопок
-    )
-
-    # Сохраняем ID обоих сообщений, чтобы редактировать их позже
-    user_rent_data[message.from_user.id] = {
-        "map_message_id": map_message.message_id,
-        "random_message_id": random_message.message_id,
-        "last_selected_place": None  # Изначально нет выбранного места
-    }
-
-    
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
     user_id = message.from_user.id
@@ -950,48 +906,6 @@ async def refresh_commands(message: types.Message):
         await set_admin_commands(bot, admin_id)
     await message.answer("Команды обновлены.")
 
-@dp.callback_query(lambda c: c.data.startswith("place_"))
-async def handle_place(callback: types.CallbackQuery):
-    place_id = int(callback.data.split("_")[1])  # Получаем ID места
-    print(f"Выбрано место с id: {place_id}")  # Логируем выбор места
-    place_description = places_info.get(place_id, "Информация о месте недоступна.")
-
-    # Получаем данные о пользователе
-    user_id = callback.from_user.id
-    user_data = user_rent_data.get(user_id, {})
-    random_message_id = user_data.get("random_message_id")
-    last_selected_place = user_data.get("last_selected_place")
-
-    # Если пользователь уже выбрал это место, то редактируем сообщение, не отправляем новое
-    if place_id == last_selected_place:
-        await callback.answer()  # Просто подтверждаем нажатие, ничего не делаем
-        return
-
-    # Если место выбрано впервые или изменено
-    if random_message_id:
-        try:
-            # Редактируем второе сообщение с новым описанием места (без кнопок)
-            await bot.edit_message_text(
-                place_description,  # Описание выбранного места
-                chat_id=callback.message.chat.id,  # chat_id того же чата
-                message_id=random_message_id,  # ID второго сообщения
-                reply_markup=None  # Без кнопок
-            )
-        except Exception as e:
-            print(f"Ошибка при редактировании сообщения: {e}")
-            # В случае ошибки отправляем новое сообщение
-            await callback.message.answer(
-                place_description,
-                reply_markup=None  # Без кнопок
-            )
-
-        # Обновляем последнее выбранное место
-        user_rent_data[user_id]["last_selected_place"] = place_id
-
-    # Подтверждаем, что кнопка была нажата
-    await callback.answer()
-
-    
 # --- Показываем время аренды, если аренда активна --- #
 @dp.message(lambda m: m.from_user.id in user_rent_data and user_rent_data[m.from_user.id].get("is_renting"))
 async def status_time_active(message: types.Message):
