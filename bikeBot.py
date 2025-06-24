@@ -949,24 +949,25 @@ async def handle_place(callback: types.CallbackQuery):
     message_id = user_rent_data.get(user_id, {}).get("message_id")
 
     if message_id:
-        # Проверяем, является ли сообщение фото
         try:
-            sent_message = await callback.message.bot.get_chat(callback.message.chat.id)  # Получаем чат
+            # Попытка отредактировать текст или caption, не используя get_message
+            if callback.message.photo:
+                # Если это фото, редактируем caption
+                await callback.message.edit_caption(
+                    caption=place_description,  # Описание выбранного места
+                    reply_markup=create_places_keyboard()  # Клавиатура с кнопками
+                )
+            else:
+                # Если это текстовое сообщение, редактируем текст
+                await callback.message.edit_text(
+                    place_description,  # Описание выбранного места
+                    reply_markup=create_places_keyboard()  # Клавиатура с кнопками
+                )
         except Exception as e:
-            print(f"Ошибка при получении сообщения: {e}")
-            sent_message = None
-
-        # Проверяем, является ли сообщение фото или текстом
-        if sent_message and sent_message.photo:
-            # Если это фото, редактируем caption (подпись)
-            await callback.message.edit_caption(
-                caption=place_description,  # Описание выбранного места
-                reply_markup=create_places_keyboard()  # Клавиатура с кнопками
-            )
-        else:
-            # Если это текстовое сообщение, редактируем текст
-            await callback.message.edit_text(
-                place_description,  # Описание выбранного места
+            print(f"Ошибка при редактировании сообщения: {e}")
+            # В случае ошибки отправляем новое сообщение
+            await callback.message.answer(
+                place_description,
                 reply_markup=create_places_keyboard()  # Клавиатура с кнопками
             )
     else:
@@ -978,6 +979,7 @@ async def handle_place(callback: types.CallbackQuery):
 
     # Подтверждаем, что кнопка была нажата
     await callback.answer()
+
 
 # --- Показываем время аренды, если аренда активна --- #
 @dp.message(lambda m: m.from_user.id in user_rent_data and user_rent_data[m.from_user.id].get("is_renting"))
