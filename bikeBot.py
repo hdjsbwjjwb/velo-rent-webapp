@@ -774,6 +774,11 @@ async def interesting_places(message: types.Message):
     print("Кнопка 'Что посмотреть?' была нажата.")  # Логируем нажатие кнопки
     # Отправляем изображение карты
     photo_path = "images/route_map.jpg"  # Убедитесь, что путь к изображению правильный
+    if os.path.exists(photo_path):
+        print(f"Изображение найдено: {photo_path}")
+    else:
+        print(f"Ошибка: изображение не найдено по пути {photo_path}")
+    
     photo = FSInputFile(photo_path)
 
     # Отправляем изображение карты с клавиатурой
@@ -785,7 +790,7 @@ async def interesting_places(message: types.Message):
 
     # Сохраняем id сообщения для дальнейшего редактирования
     user_rent_data[message.from_user.id] = {"message_id": sent_message.message_id}
-
+    print(f"Сообщение отправлено. ID сообщения: {sent_message.message_id}")
     
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
@@ -942,6 +947,7 @@ async def refresh_commands(message: types.Message):
 @dp.callback_query(lambda c: c.data.startswith("place_"))
 async def handle_place(callback: types.CallbackQuery):
     place_id = int(callback.data.split("_")[1])  # Получаем id места
+    print(f"Выбрано место с id: {place_id}")  # Логируем выбор места
     place_description = places_info.get(place_id, "Информация о месте недоступна.")
     
     # Получаем сообщение, которое отправили ранее
@@ -979,7 +985,7 @@ async def handle_place(callback: types.CallbackQuery):
 
     # Подтверждаем, что кнопка была нажата
     await callback.answer()
-
+    
 # --- Показываем время аренды, если аренда активна --- #
 @dp.message(lambda m: m.from_user.id in user_rent_data and user_rent_data[m.from_user.id].get("is_renting"))
 async def status_time_active(message: types.Message):
