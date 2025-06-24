@@ -943,17 +943,27 @@ async def refresh_commands(message: types.Message):
 async def handle_place(callback: types.CallbackQuery):
     place_id = int(callback.data.split("_")[1])  # Получаем id места
     place_description = places_info.get(place_id, "Информация о месте недоступна.")
-
+    
     # Получаем сообщение, которое отправили ранее
     user_id = callback.from_user.id
     message_id = user_rent_data.get(user_id, {}).get("message_id")
 
     if message_id:
-        # Заменяем текст в том же сообщении
-        await callback.message.edit_text(
-            place_description,  # Описание выбранного места
-            reply_markup=create_places_keyboard()  # Клавиатура с кнопками
-        )
+        # Проверим, является ли сообщение фото
+        sent_message = await callback.message.bot.get_message(callback.message.chat.id, message_id)
+        
+        if sent_message.photo:
+            # Если это фото, редактируем caption (подпись)
+            await callback.message.edit_caption(
+                caption=place_description,  # Описание выбранного места
+                reply_markup=create_places_keyboard()  # Клавиатура с кнопками
+            )
+        else:
+            # Если это текстовое сообщение, редактируем текст
+            await callback.message.edit_text(
+                place_description,  # Описание выбранного места
+                reply_markup=create_places_keyboard()  # Клавиатура с кнопками
+            )
     else:
         # Если сообщение не найдено, отправляем новое
         await callback.message.answer(
@@ -963,6 +973,7 @@ async def handle_place(callback: types.CallbackQuery):
 
     # Подтверждаем, что кнопка была нажата
     await callback.answer()
+
 
 # --- Показываем время аренды, если аренда активна --- #
 @dp.message(lambda m: m.from_user.id in user_rent_data and user_rent_data[m.from_user.id].get("is_renting"))
