@@ -949,9 +949,10 @@ async def handle_place(callback: types.CallbackQuery):
     message_id = user_rent_data.get(user_id, {}).get("message_id")
 
     if message_id:
-        # Проверим, является ли сообщение фото
+        # Получаем сообщение по ID
         sent_message = await callback.message.bot.get_message(callback.message.chat.id, message_id)
-        
+
+        # Проверяем, является ли сообщение фото или текстом
         if sent_message.photo:
             # Если это фото, редактируем caption (подпись)
             await callback.message.edit_caption(
