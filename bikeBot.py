@@ -793,8 +793,10 @@ async def interesting_places(message: types.Message):
     # Сохраняем ID обоих сообщений, чтобы редактировать их позже
     user_rent_data[message.from_user.id] = {
         "map_message_id": map_message.message_id,
-        "random_message_id": random_message.message_id
+        "random_message_id": random_message.message_id,
+        "last_selected_place": None  # Изначально нет выбранного места
     }
+
     
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
@@ -954,24 +956,27 @@ async def handle_place(callback: types.CallbackQuery):
     print(f"Выбрано место с id: {place_id}")  # Логируем выбор места
     place_description = places_info.get(place_id, "Информация о месте недоступна.")
 
-    # Получаем ID второго сообщения (с рандомным текстом)
+    # Получаем данные о пользователе
     user_id = callback.from_user.id
-    random_message_id = user_rent_data.get(user_id, {}).get("random_message_id")
+    user_data = user_rent_data.get(user_id, {})
+    random_message_id = user_data.get("random_message_id")
+    last_selected_place = user_data.get("last_selected_place")
 
+    # Если пользователь уже выбрал это место, то редактируем сообщение, не отправляем новое
+    if place_id == last_selected_place:
+        await callback.answer()  # Просто подтверждаем нажатие, ничего не делаем
+        return
+
+    # Если место выбрано впервые или изменено
     if random_message_id:
         try:
-            # Получаем текущее сообщение
-            current_message = await bot.get_message(callback.message.chat.id, random_message_id)
-
-            # Проверяем, отличается ли текущее описание от нового
-            if current_message.text != place_description:
-                # Редактируем второе сообщение с новым описанием места (без кнопок)
-                await bot.edit_message_text(
-                    place_description,  # Описание выбранного места
-                    chat_id=callback.message.chat.id,  # chat_id того же чата
-                    message_id=random_message_id,  # ID второго сообщения
-                    reply_markup=None  # Без кнопок
-                )
+            # Редактируем второе сообщение с новым описанием места (без кнопок)
+            await bot.edit_message_text(
+                place_description,  # Описание выбранного места
+                chat_id=callback.message.chat.id,  # chat_id того же чата
+                message_id=random_message_id,  # ID второго сообщения
+                reply_markup=None  # Без кнопок
+            )
         except Exception as e:
             print(f"Ошибка при редактировании сообщения: {e}")
             # В случае ошибки отправляем новое сообщение
@@ -979,15 +984,13 @@ async def handle_place(callback: types.CallbackQuery):
                 place_description,
                 reply_markup=None  # Без кнопок
             )
-    else:
-        # Если сообщение не найдено, отправляем новое
-        await callback.message.answer(
-            place_description,
-            reply_markup=None  # Без кнопок
-        )
+
+        # Обновляем последнее выбранное место
+        user_rent_data[user_id]["last_selected_place"] = place_id
 
     # Подтверждаем, что кнопка была нажата
     await callback.answer()
+
     
 # --- Показываем время аренды, если аренда активна --- #
 @dp.message(lambda m: m.from_user.id in user_rent_data and user_rent_data[m.from_user.id].get("is_renting"))
