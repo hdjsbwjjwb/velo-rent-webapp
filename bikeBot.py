@@ -795,7 +795,7 @@ async def place_1(message: types.Message):
                 chat_id=message.chat.id,
                 message_id=data['map_message_id']
             )
-        except aiogram.exceptions.TelegramBadRequest as e:
+        except TelegramBadRequest as e:  # Обработка исключения
             print(f"Ошибка при редактировании сообщения: {e}")
             await message.answer("Не удалось отредактировать сообщение.")
 
@@ -815,7 +815,7 @@ async def place_2(message: types.Message):
                 chat_id=message.chat.id,
                 message_id=data['map_message_id']
             )
-        except aiogram.exceptions.TelegramBadRequest as e:
+        except TelegramBadRequest as e:  # Обработка исключения
             print(f"Ошибка при редактировании сообщения: {e}")
             await message.answer("Не удалось отредактировать сообщение.")
 
@@ -835,7 +835,7 @@ async def place_3(message: types.Message):
                 chat_id=message.chat.id,
                 message_id=data['map_message_id']
             )
-        except aiogram.exceptions.TelegramBadRequest as e:
+        except TelegramBadRequest as e:  # Обработка исключения
             print(f"Ошибка при редактировании сообщения: {e}")
             await message.answer("Не удалось отредактировать сообщение.")
 
@@ -855,7 +855,7 @@ async def place_4(message: types.Message):
                 chat_id=message.chat.id,
                 message_id=data['map_message_id']
             )
-        except aiogram.exceptions.TelegramBadRequest as e:
+        except TelegramBadRequest as e:  # Обработка исключения
             print(f"Ошибка при редактировании сообщения: {e}")
             await message.answer("Не удалось отредактировать сообщение.")
 
@@ -875,7 +875,7 @@ async def place_5(message: types.Message):
                 chat_id=message.chat.id,
                 message_id=data['map_message_id']
             )
-        except aiogram.exceptions.TelegramBadRequest as e:
+        except TelegramBadRequest as e:  # Обработка исключения
             print(f"Ошибка при редактировании сообщения: {e}")
             await message.answer("Не удалось отредактировать сообщение.")
 
@@ -895,7 +895,7 @@ async def place_6(message: types.Message):
                 chat_id=message.chat.id,
                 message_id=data['map_message_id']
             )
-        except aiogram.exceptions.TelegramBadRequest as e:
+        except TelegramBadRequest as e:  # Обработка исключения
             print(f"Ошибка при редактировании сообщения: {e}")
             await message.answer("Не удалось отредактировать сообщение.")
 
@@ -915,7 +915,7 @@ async def place_7(message: types.Message):
                 chat_id=message.chat.id,
                 message_id=data['map_message_id']
             )
-        except aiogram.exceptions.TelegramBadRequest as e:
+        except TelegramBadRequest as e:  # Обработка исключения
             print(f"Ошибка при редактировании сообщения: {e}")
             await message.answer("Не удалось отредактировать сообщение.")
 
@@ -935,7 +935,7 @@ async def place_8(message: types.Message):
                 chat_id=message.chat.id,
                 message_id=data['map_message_id']
             )
-        except aiogram.exceptions.TelegramBadRequest as e:
+        except TelegramBadRequest as e:  # Обработка исключения
             print(f"Ошибка при редактировании сообщения: {e}")
             await message.answer("Не удалось отредактировать сообщение.")
 
@@ -955,7 +955,7 @@ async def place_9(message: types.Message):
                 chat_id=message.chat.id,
                 message_id=data['map_message_id']
             )
-        except aiogram.exceptions.TelegramBadRequest as e:
+        except TelegramBadRequest as e:  # Обработка исключения
             print(f"Ошибка при редактировании сообщения: {e}")
             await message.answer("Не удалось отредактировать сообщение.")
 
