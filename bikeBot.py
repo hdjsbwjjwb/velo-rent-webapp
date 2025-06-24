@@ -242,18 +242,20 @@ def contact_keyboard():
     )
 
 # -------- Inline клавиатуры -------- #
-
 def create_places_keyboard():
-    # Создаем клавиатуру с нужным количеством кнопок в ряду
-    keyboard = InlineKeyboardMarkup(row_width=3)
-
-    # Список кнопок
+    # Сначала создаем кнопки
     inline_buttons = [
         InlineKeyboardButton(f"Место {i}", callback_data=f"place_{i}") for i in range(1, 10)
     ]
-    
-    # Передаем кнопки в параметр inline_keyboard
-    keyboard.inline_keyboard = [inline_buttons]  # Каждая строка кнопок должна быть вложена в отдельный список
+
+    # Создаем клавиатуру, указываем количество кнопок в ряду
+    keyboard = InlineKeyboardMarkup(row_width=3)
+
+    # Указываем, что кнопки должны быть вложены в список
+    keyboard.inline_keyboard = [
+        inline_buttons[i:i + 3]  # Разделяем на группы по 3 кнопки в ряд
+        for i in range(0, len(inline_buttons), 3)
+    ]
 
     return keyboard
 # -------- Обработчики -------- #
@@ -771,6 +773,7 @@ async def start_rent_real(message: types.Message):
 
 @dp.message(F.text == "🗺 Что посмотреть?")
 async def interesting_places(message: types.Message):
+    print("Кнопка 'Что посмотреть?' была нажата.")  # Логируем нажатие кнопки
     # Отправляем изображение карты
     photo_path = "path_to_map_with_route.jpg"  # Убедитесь, что путь к изображению правильный
     photo = FSInputFile(photo_path)
