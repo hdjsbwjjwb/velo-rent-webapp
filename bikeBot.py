@@ -948,22 +948,29 @@ async def handle_place(callback: types.CallbackQuery):
     user_id = callback.from_user.id
     message_id = user_rent_data.get(user_id, {}).get("message_id")
 
-    # Проверяем, если уже есть сообщение, которое нужно отредактировать
     if message_id:
         try:
-            # Если сообщение найдено, редактируем его (не отправляем новое)
-            if callback.message.photo:
-                # Если это фото, редактируем caption
-                await callback.message.edit_caption(
-                    caption=place_description,  # Описание выбранного места
-                    reply_markup=create_places_keyboard()  # Клавиатура с кнопками
-                )
+            # Получаем текущее сообщение
+            sent_message = await callback.message.bot.get_message(callback.message.chat.id, message_id)
+            
+            # Проверяем, изменилось ли содержание или клавиатура
+            if sent_message.text != place_description or sent_message.reply_markup != create_places_keyboard():
+                # Если содержание или клавиатура изменились, редактируем сообщение
+                if callback.message.photo:
+                    # Если это фото, редактируем caption
+                    await callback.message.edit_caption(
+                        caption=place_description,  # Описание выбранного места
+                        reply_markup=create_places_keyboard()  # Клавиатура с кнопками
+                    )
+                else:
+                    # Если это текстовое сообщение, редактируем текст
+                    await callback.message.edit_text(
+                        place_description,  # Описание выбранного места
+                        reply_markup=create_places_keyboard()  # Клавиатура с кнопками
+                    )
             else:
-                # Если это текстовое сообщение, редактируем текст
-                await callback.message.edit_text(
-                    place_description,  # Описание выбранного места
-                    reply_markup=create_places_keyboard()  # Клавиатура с кнопками
-                )
+                # Если ничего не изменилось, просто игнорируем
+                print("Содержание и клавиатура не изменились, редактирование не требуется.")
         except Exception as e:
             print(f"Ошибка при редактировании сообщения: {e}")
             # В случае ошибки отправляем новое сообщение
@@ -983,8 +990,6 @@ async def handle_place(callback: types.CallbackQuery):
 
     # Подтверждаем, что кнопка была нажата
     await callback.answer()
-
-
 
 # --- Показываем время аренды, если аренда активна --- #
 @dp.message(lambda m: m.from_user.id in user_rent_data and user_rent_data[m.from_user.id].get("is_renting"))
