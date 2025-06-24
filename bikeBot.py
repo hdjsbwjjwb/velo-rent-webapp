@@ -748,7 +748,7 @@ async def send_map_and_buttons(message: types.Message):
 
     if data and data.get("is_renting"):
         # Отправляем карту с маршрутом и клавиатуру
-        photo_path = "path_to_your_map_image.png"  # Убедитесь, что указали правильный путь к изображению карты
+        photo_path = "images/route_map.jpg"  # Убедитесь, что указали правильный путь к изображению карты
         sent_message = await message.answer_photo(
             FSInputFile(photo_path),
             caption="Вот карта с маршрутом. Выберите место, которое хотите посетить!"
