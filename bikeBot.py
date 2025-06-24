@@ -950,27 +950,13 @@ async def handle_place(callback: types.CallbackQuery):
 
     if message_id:
         try:
-            # Получаем текущее сообщение
-            sent_message = await callback.message.bot.get_message(callback.message.chat.id, message_id)
-            
-            # Проверяем, изменилось ли содержание
-            if sent_message.text != place_description:
-                # Если описание изменилось, редактируем только текст сообщения
-                if callback.message.photo:
-                    # Если это фото, редактируем caption
-                    await callback.message.edit_caption(
-                        caption=place_description,  # Описание выбранного места
-                        reply_markup=sent_message.reply_markup  # Сохраняем ту же клавиатуру
-                    )
-                else:
-                    # Если это текстовое сообщение, редактируем текст
-                    await callback.message.edit_text(
-                        place_description,  # Описание выбранного места
-                        reply_markup=sent_message.reply_markup  # Сохраняем ту же клавиатуру
-                    )
-            else:
-                # Если описание не изменилось, ничего не делаем
-                print("Описание не изменилось, редактирование не требуется.")
+            # Получаем сообщение с помощью edit_message_text
+            sent_message = await callback.message.bot.edit_message_text(
+                place_description,  # Описание выбранного места
+                chat_id=callback.message.chat.id,
+                message_id=message_id,  # ID сообщения, которое нужно отредактировать
+                reply_markup=create_places_keyboard()  # Клавиатура с кнопками
+            )
         except Exception as e:
             print(f"Ошибка при редактировании сообщения: {e}")
             # В случае ошибки отправляем новое сообщение
