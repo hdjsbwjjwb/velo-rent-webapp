@@ -953,31 +953,33 @@ async def handle_place(callback: types.CallbackQuery):
             # Получаем текущее сообщение
             sent_message = await callback.message.bot.get_message(callback.message.chat.id, message_id)
             
-            # Проверяем, изменилось ли содержание или клавиатура
-            if sent_message.text != place_description or sent_message.reply_markup != create_places_keyboard():
-                # Если содержание или клавиатура изменились, редактируем сообщение
+            # Проверяем, изменилось ли содержание
+            if sent_message.text != place_description:
+                # Если описание изменилось, редактируем только текст сообщения
                 if callback.message.photo:
                     # Если это фото, редактируем caption
                     await callback.message.edit_caption(
                         caption=place_description,  # Описание выбранного места
-                        reply_markup=create_places_keyboard()  # Клавиатура с кнопками
+                        reply_markup=sent_message.reply_markup  # Сохраняем ту же клавиатуру
                     )
                 else:
                     # Если это текстовое сообщение, редактируем текст
                     await callback.message.edit_text(
                         place_description,  # Описание выбранного места
-                        reply_markup=create_places_keyboard()  # Клавиатура с кнопками
+                        reply_markup=sent_message.reply_markup  # Сохраняем ту же клавиатуру
                     )
             else:
-                # Если ничего не изменилось, просто игнорируем
-                print("Содержание и клавиатура не изменились, редактирование не требуется.")
+                # Если описание не изменилось, ничего не делаем
+                print("Описание не изменилось, редактирование не требуется.")
         except Exception as e:
             print(f"Ошибка при редактировании сообщения: {e}")
             # В случае ошибки отправляем новое сообщение
-            await callback.message.answer(
+            sent_message = await callback.message.answer(
                 place_description,
                 reply_markup=create_places_keyboard()  # Клавиатура с кнопками
             )
+            # Сохраняем message_id для дальнейших редактирований
+            user_rent_data[user_id] = {"message_id": sent_message.message_id}
     else:
         # Если сообщение не найдено, отправляем новое
         sent_message = await callback.message.answer(
