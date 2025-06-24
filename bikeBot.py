@@ -960,13 +960,18 @@ async def handle_place(callback: types.CallbackQuery):
 
     if random_message_id:
         try:
-            # Редактируем второе сообщение с новым описанием места (без кнопок)
-            await bot.edit_message_text(
-                place_description,  # Описание выбранного места
-                chat_id=callback.message.chat.id,  # chat_id того же чата
-                message_id=random_message_id,  # ID второго сообщения
-                reply_markup=None  # Без кнопок
-            )
+            # Получаем текущее сообщение
+            current_message = await bot.get_message(callback.message.chat.id, random_message_id)
+
+            # Проверяем, отличается ли текущее описание от нового
+            if current_message.text != place_description:
+                # Редактируем второе сообщение с новым описанием места (без кнопок)
+                await bot.edit_message_text(
+                    place_description,  # Описание выбранного места
+                    chat_id=callback.message.chat.id,  # chat_id того же чата
+                    message_id=random_message_id,  # ID второго сообщения
+                    reply_markup=None  # Без кнопок
+                )
         except Exception as e:
             print(f"Ошибка при редактировании сообщения: {e}")
             # В случае ошибки отправляем новое сообщение
@@ -983,7 +988,6 @@ async def handle_place(callback: types.CallbackQuery):
 
     # Подтверждаем, что кнопка была нажата
     await callback.answer()
-
     
 # --- Показываем время аренды, если аренда активна --- #
 @dp.message(lambda m: m.from_user.id in user_rent_data and user_rent_data[m.from_user.id].get("is_renting"))
