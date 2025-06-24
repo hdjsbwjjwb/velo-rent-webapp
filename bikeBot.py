@@ -744,14 +744,25 @@ async def start_rent_real(message: types.Message):
 @dp.message(F.text == "🗺 Что посмотреть?")
 async def interesting_places(message: types.Message):
     user_id = message.from_user.id
-    data = user_rent_data.get(user_id)  # Получаем данные о пользователе
+    data = user_rent_data.get(user_id)
 
-    if data and data.get("is_renting"):  # Проверяем, что аренда активна
-        # Генерация или получение маршрута интересных мест
-        route = "Ваш маршрут по интересным местам:\n1. Место 1\n2. Место 2\n3. Место 3"  # Пример маршрута
-        await message.answer(route, reply_markup=during_rent_keyboard())  # Отправляем маршрут с клавиатурой
+    if data and data.get("is_renting"):
+        # Список точек маршрута
+        places = [
+            (54.7221, 20.4522),  # Место 1
+            (54.7280, 20.4655),  # Место 2
+            (54.7303, 20.4779)   # Место 3
+        ]
+        
+        # Отправка каждой точки на карту
+        for lat, lon in places:
+            await message.answer_location(
+                latitude=lat,
+                longitude=lon,
+                reply_markup=during_rent_keyboard()  # Клавиатура для дальнейших действий
+            )
     else:
-        await message.answer("Ошибка! Аренда не активна. Пожалуйста, начните аренду.", reply_markup=main_menu_keyboard())  # Если аренда не активна
+        await message.answer("Ошибка! Аренда не активна. Пожалуйста, начните аренду.", reply_markup=main_menu_keyboard())
 
 
 @dp.message(F.text == "🔴 Завершить аренду")
