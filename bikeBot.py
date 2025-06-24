@@ -778,16 +778,23 @@ async def interesting_places(message: types.Message):
     photo = FSInputFile(photo_path)
 
     # Отправляем изображение карты с клавиатурой
-    sent_message = await message.answer_photo(
+    map_message = await message.answer_photo(
         photo,
         caption="Вот ваш маршрут с интересными местами. Нажмите на кнопку, чтобы узнать больше!",
         reply_markup=create_places_keyboard()  # Клавиатура с кнопками для мест
     )
 
-    # Сохраняем ID этого сообщения, чтобы редактировать его позже, если это нужно
-    user_rent_data[message.from_user.id] = {"message_id": sent_message.message_id}
+    # Отправляем второе сообщение с рандомным текстом
+    random_message = await message.answer(
+        "Выберите место, чтобы увидеть его описание.",  # Рандомный текст
+        reply_markup=None  # Без кнопок
+    )
 
-
+    # Сохраняем ID обоих сообщений, чтобы редактировать их позже
+    user_rent_data[message.from_user.id] = {
+        "map_message_id": map_message.message_id,
+        "random_message_id": random_message.message_id
+    }
     
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
@@ -947,15 +954,17 @@ async def handle_place(callback: types.CallbackQuery):
     print(f"Выбрано место с id: {place_id}")  # Логируем выбор места
     place_description = places_info.get(place_id, "Информация о месте недоступна.")
 
-    # Получаем ID сообщения, которое было отправлено ранее
+    # Получаем ID второго сообщения (с рандомным текстом)
     user_id = callback.from_user.id
-    message_id = user_rent_data.get(user_id, {}).get("message_id")
+    random_message_id = user_rent_data.get(user_id, {}).get("random_message_id")
 
-    if message_id:
+    if random_message_id:
         try:
-            # Редактируем сообщение с новым описанием места (без кнопок)
-            await callback.message.edit_text(
+            # Редактируем второе сообщение с новым описанием места (без кнопок)
+            await bot.edit_message_text(
                 place_description,  # Описание выбранного места
+                chat_id=callback.message.chat.id,  # chat_id того же чата
+                message_id=random_message_id,  # ID второго сообщения
                 reply_markup=None  # Без кнопок
             )
         except Exception as e:
