@@ -742,12 +742,18 @@ async def start_rent_real(message: types.Message):
         pass
         #await logger.info(f"Не удалось отправить уведомление админу (начало): {e}")
 
+import logging
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 @dp.message(F.text == "Что посмотреть?")
 async def send_map_and_buttons(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
-    # Проверяем, что нет активной аренды, если есть, не обрабатываем запрос
+    # Проверяем, что нет активной аренды
     if data.get("is_renting"):
         await message.answer(
             "Ошибка! Ваша аренда всё ещё активна. Завершите аренду, чтобы выбрать что посмотреть.",
@@ -756,52 +762,55 @@ async def send_map_and_buttons(message: types.Message):
         return
 
     # Отправляем сообщение с картой и клавишами, если оно ещё не отправлено
-    if "map_message_id" not in data:
-        photo_path = "/path/to/your/map_image.png"  # Путь к карте
+    try:
+        if "map_message_id" not in data:
+            photo_path = "/path/to/your/map_image.png"  # Путь к карте
 
-        # Отправляем карту с текстом и кнопками для всех мест
-        sent_message = await message.answer_photo(
-            FSInputFile(photo_path),
-            caption="Вот карта с маршрутом. Выберите место, которое хотите посетить!",
-            reply_markup=types.ReplyKeyboardMarkup(
-                keyboard=[
-                    [types.KeyboardButton("Место 1")],
-                    [types.KeyboardButton("Место 2")],
-                    [types.KeyboardButton("Место 3")],
-                    [types.KeyboardButton("Место 4")],
-                    [types.KeyboardButton("Место 5")],
-                    [types.KeyboardButton("Место 6")],
-                    [types.KeyboardButton("Место 7")],
-                    [types.KeyboardButton("Место 8")],
-                    [types.KeyboardButton("Место 9")],
-                ],
-                resize_keyboard=True,
-            ),
-        )
+            # Отправляем карту с текстом и кнопками для всех мест
+            sent_message = await message.answer_photo(
+                FSInputFile(photo_path),
+                caption="Вот карта с маршрутом. Выберите место, которое хотите посетить!",
+                reply_markup=types.ReplyKeyboardMarkup(
+                    keyboard=[
+                        [types.KeyboardButton("Место 1")],
+                        [types.KeyboardButton("Место 2")],
+                        [types.KeyboardButton("Место 3")],
+                        [types.KeyboardButton("Место 4")],
+                        [types.KeyboardButton("Место 5")],
+                        [types.KeyboardButton("Место 6")],
+                        [types.KeyboardButton("Место 7")],
+                        [types.KeyboardButton("Место 8")],
+                        [types.KeyboardButton("Место 9")],
+                    ],
+                    resize_keyboard=True,
+                ),
+            )
 
-        # Сохраняем ID этого сообщения, чтобы редактировать его в дальнейшем
-        user_rent_data[user_id]["map_message_id"] = sent_message.message_id
-    else:
-        # Если сообщение уже отправлено, просто обновляем клавиатуру
-        map_message_id = data.get("map_message_id")
-        await bot.edit_message_reply_markup(
-            chat_id=message.chat.id,
-            message_id=map_message_id,
-            reply_markup=types.ReplyKeyboardMarkup(
-                keyboard=[
-                    [types.KeyboardButton("Место 1")],
-                    [types.KeyboardButton("Место 2")],
-                    [types.KeyboardButton("Место 3")],
-                    [types.KeyboardButton("Место 4")],
-                    [types.KeyboardButton("Место 5")],
-                    [types.KeyboardButton("Место 6")],
-                    [types.KeyboardButton("Место 7")],
-                    [types.KeyboardButton("Место 8")],
-                    [types.KeyboardButton("Место 9")],
-                ],
-                resize_keyboard=True,
-            ),
-        )
+            # Сохраняем ID этого сообщения, чтобы редактировать его в дальнейшем
+            user_rent_data[user_id]["map_message_id"] = sent_message.message_id
+        else:
+            map_message_id = data.get("map_message_id")
+            await bot.edit_message_reply_markup(
+                chat_id=message.chat.id,
+                message_id=map_message_id,
+                reply_markup=types.ReplyKeyboardMarkup(
+                    keyboard=[
+                        [types.KeyboardButton("Место 1")],
+                        [types.KeyboardButton("Место 2")],
+                        [types.KeyboardButton("Место 3")],
+                        [types.KeyboardButton("Место 4")],
+                        [types.KeyboardButton("Место 5")],
+                        [types.KeyboardButton("Место 6")],
+                        [types.KeyboardButton("Место 7")],
+                        [types.KeyboardButton("Место 8")],
+                        [types.KeyboardButton("Место 9")],
+                    ],
+                    resize_keyboard=True,
+                ),
+            )
+    except Exception as e:
+        logger.error(f"Ошибка при отправке карты и кнопок: {e}")
+        await message.answer("Произошла ошибка при загрузке карты. Попробуйте снова.")
 
 @dp.message(F.text == "Место 1")
 async def place_1(message: types.Message):
