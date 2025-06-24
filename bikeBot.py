@@ -786,178 +786,225 @@ async def place_1(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
-    if data and data.get("map_message_id"):
-        place_info = "📍 Место 1: Природный парк Куршская коса.\n\nУникальное природное место с песчаными дюнами и лесами, идеальное для прогулок на велосипеде."
+    if data:
+        map_message_id = data.get("map_message_id")  # Получаем ID сообщения для редактирования
+        print(f"Map message ID: {map_message_id}")  # Логируем ID сообщения
+        
+        if map_message_id:
+            place_info = "📍 Место 1: Природный парк Куршская коса.\n\nУникальное природное место с песчаными дюнами и лесами, идеальное для прогулок на велосипеде."
 
-        try:
-            await bot.edit_message_text(
-                place_info,
-                chat_id=message.chat.id,
-                message_id=data['map_message_id']
-            )
-        except TelegramBadRequest as e:  # Обработка исключения
-            print(f"Ошибка при редактировании сообщения: {e}")
-            await message.answer("Не удалось отредактировать сообщение.")
+            try:
+                await bot.edit_message_text(
+                    place_info,
+                    chat_id=message.chat.id,
+                    message_id=map_message_id
+                )
+            except TelegramBadRequest as e:
+                print(f"Ошибка при редактировании сообщения: {e}")
+                await message.answer("Не удалось отредактировать сообщение.")
+        else:
+            print("Map message ID не найден.")
+            await message.answer("Сообщение для редактирования не найдено.")
 
-
-# Обработчик для Место 2
 @dp.message(F.text == "Место 2")
 async def place_2(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
-    if data and data.get("map_message_id"):
-        place_info = "📍 Место 2: Маяк на Балтийской косе.\n\nЗнаменитый маяк с потрясающим видом на море. Отличное место для отдыха и фотосессий."
+    if data:
+        map_message_id = data.get("map_message_id")
+        print(f"Map message ID: {map_message_id}")
+        
+        if map_message_id:
+            place_info = "📍 Место 2: Замок Нессельбек.\n\nИсторический замок с потрясающим видом на Балтийское море."
 
-        try:
-            await bot.edit_message_text(
-                place_info,
-                chat_id=message.chat.id,
-                message_id=data['map_message_id']
-            )
-        except TelegramBadRequest as e:  # Обработка исключения
-            print(f"Ошибка при редактировании сообщения: {e}")
-            await message.answer("Не удалось отредактировать сообщение.")
+            try:
+                await bot.edit_message_text(
+                    place_info,
+                    chat_id=message.chat.id,
+                    message_id=map_message_id
+                )
+            except TelegramBadRequest as e:
+                print(f"Ошибка при редактировании сообщения: {e}")
+                await message.answer("Не удалось отредактировать сообщение.")
+        else:
+            print("Map message ID не найден.")
+            await message.answer("Сообщение для редактирования не найдено.")
 
-
-# Обработчик для Место 3
 @dp.message(F.text == "Место 3")
 async def place_3(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
-    if data and data.get("map_message_id"):
-        place_info = "📍 Место 3: Скалы в Балтийске.\n\nПрекрасный природный объект с великолепными видами на Балтийское море. Отличное место для любителей природы."
+    if data:
+        map_message_id = data.get("map_message_id")
+        print(f"Map message ID: {map_message_id}")
+        
+        if map_message_id:
+            place_info = "📍 Место 3: Музей янтаря.\n\nУникальная коллекция янтарных изделий и исторических экспонатов."
 
-        try:
-            await bot.edit_message_text(
-                place_info,
-                chat_id=message.chat.id,
-                message_id=data['map_message_id']
-            )
-        except TelegramBadRequest as e:  # Обработка исключения
-            print(f"Ошибка при редактировании сообщения: {e}")
-            await message.answer("Не удалось отредактировать сообщение.")
+            try:
+                await bot.edit_message_text(
+                    place_info,
+                    chat_id=message.chat.id,
+                    message_id=map_message_id
+                )
+            except TelegramBadRequest as e:
+                print(f"Ошибка при редактировании сообщения: {e}")
+                await message.answer("Не удалось отредактировать сообщение.")
+        else:
+            print("Map message ID не найден.")
+            await message.answer("Сообщение для редактирования не найдено.")
 
-
-# Обработчик для Место 4
 @dp.message(F.text == "Место 4")
 async def place_4(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
-    if data and data.get("map_message_id"):
-        place_info = "📍 Место 4: Кафе на пляже.\n\nПриятное место для отдыха после поездки на велосипеде. Отдохните с видом на море."
+    if data:
+        map_message_id = data.get("map_message_id")
+        print(f"Map message ID: {map_message_id}")
+        
+        if map_message_id:
+            place_info = "📍 Место 4: Скалистый мыс.\n\nОтличное место для наблюдения за природой и морем."
 
-        try:
-            await bot.edit_message_text(
-                place_info,
-                chat_id=message.chat.id,
-                message_id=data['map_message_id']
-            )
-        except TelegramBadRequest as e:  # Обработка исключения
-            print(f"Ошибка при редактировании сообщения: {e}")
-            await message.answer("Не удалось отредактировать сообщение.")
+            try:
+                await bot.edit_message_text(
+                    place_info,
+                    chat_id=message.chat.id,
+                    message_id=map_message_id
+                )
+            except TelegramBadRequest as e:
+                print(f"Ошибка при редактировании сообщения: {e}")
+                await message.answer("Не удалось отредактировать сообщение.")
+        else:
+            print("Map message ID не найден.")
+            await message.answer("Сообщение для редактирования не найдено.")
 
-
-# Обработчик для Место 5
 @dp.message(F.text == "Место 5")
 async def place_5(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
-    if data and data.get("map_message_id"):
-        place_info = "📍 Место 5: Природные тропы.\n\nОтличные тропы для прогулок на велосипеде с природными пейзажами и лесами."
+    if data:
+        map_message_id = data.get("map_message_id")
+        print(f"Map message ID: {map_message_id}")
+        
+        if map_message_id:
+            place_info = "📍 Место 5: Лесная тропа.\n\nКрасивые виды на сосновые леса и пейзажи."
 
-        try:
-            await bot.edit_message_text(
-                place_info,
-                chat_id=message.chat.id,
-                message_id=data['map_message_id']
-            )
-        except TelegramBadRequest as e:  # Обработка исключения
-            print(f"Ошибка при редактировании сообщения: {e}")
-            await message.answer("Не удалось отредактировать сообщение.")
+            try:
+                await bot.edit_message_text(
+                    place_info,
+                    chat_id=message.chat.id,
+                    message_id=map_message_id
+                )
+            except TelegramBadRequest as e:
+                print(f"Ошибка при редактировании сообщения: {e}")
+                await message.answer("Не удалось отредактировать сообщение.")
+        else:
+            print("Map message ID не найден.")
+            await message.answer("Сообщение для редактирования не найдено.")
 
-
-# Обработчик для Место 6
 @dp.message(F.text == "Место 6")
 async def place_6(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
-    if data and data.get("map_message_id"):
-        place_info = "📍 Место 6: Дюны Куршской косы.\n\nПотрясающие песчаные дюны, идеально подходящие для прогулок на велосипеде."
+    if data:
+        map_message_id = data.get("map_message_id")
+        print(f"Map message ID: {map_message_id}")
+        
+        if map_message_id:
+            place_info = "📍 Место 6: Балтийское побережье.\n\nИдеальное место для отдыха и прогулок по побережью."
 
-        try:
-            await bot.edit_message_text(
-                place_info,
-                chat_id=message.chat.id,
-                message_id=data['map_message_id']
-            )
-        except TelegramBadRequest as e:  # Обработка исключения
-            print(f"Ошибка при редактировании сообщения: {e}")
-            await message.answer("Не удалось отредактировать сообщение.")
+            try:
+                await bot.edit_message_text(
+                    place_info,
+                    chat_id=message.chat.id,
+                    message_id=map_message_id
+                )
+            except TelegramBadRequest as e:
+                print(f"Ошибка при редактировании сообщения: {e}")
+                await message.answer("Не удалось отредактировать сообщение.")
+        else:
+            print("Map message ID не найден.")
+            await message.answer("Сообщение для редактирования не найдено.")
 
-
-# Обработчик для Место 7
 @dp.message(F.text == "Место 7")
 async def place_7(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
-    if data and data.get("map_message_id"):
-        place_info = "📍 Место 7: Маяк в Светлогорске.\n\nУникальный маяк с невероятным видом на Балтийское море."
+    if data:
+        map_message_id = data.get("map_message_id")
+        print(f"Map message ID: {map_message_id}")
+        
+        if map_message_id:
+            place_info = "📍 Место 7: Старый город.\n\nОчаровательные исторические улицы и архитектура."
 
-        try:
-            await bot.edit_message_text(
-                place_info,
-                chat_id=message.chat.id,
-                message_id=data['map_message_id']
-            )
-        except TelegramBadRequest as e:  # Обработка исключения
-            print(f"Ошибка при редактировании сообщения: {e}")
-            await message.answer("Не удалось отредактировать сообщение.")
+            try:
+                await bot.edit_message_text(
+                    place_info,
+                    chat_id=message.chat.id,
+                    message_id=map_message_id
+                )
+            except TelegramBadRequest as e:
+                print(f"Ошибка при редактировании сообщения: {e}")
+                await message.answer("Не удалось отредактировать сообщение.")
+        else:
+            print("Map message ID не найден.")
+            await message.answer("Сообщение для редактирования не найдено.")
 
-
-# Обработчик для Место 8
 @dp.message(F.text == "Место 8")
 async def place_8(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
-    if data and data.get("map_message_id"):
-        place_info = "📍 Место 8: Краеведческий музей.\n\nИнтересный музей с экспонатами местной истории."
+    if data:
+        map_message_id = data.get("map_message_id")
+        print(f"Map message ID: {map_message_id}")
+        
+        if map_message_id:
+            place_info = "📍 Место 8: Прибрежная аллея.\n\nТропа вдоль побережья с прекрасными видами."
 
-        try:
-            await bot.edit_message_text(
-                place_info,
-                chat_id=message.chat.id,
-                message_id=data['map_message_id']
-            )
-        except TelegramBadRequest as e:  # Обработка исключения
-            print(f"Ошибка при редактировании сообщения: {e}")
-            await message.answer("Не удалось отредактировать сообщение.")
+            try:
+                await bot.edit_message_text(
+                    place_info,
+                    chat_id=message.chat.id,
+                    message_id=map_message_id
+                )
+            except TelegramBadRequest as e:
+                print(f"Ошибка при редактировании сообщения: {e}")
+                await message.answer("Не удалось отредактировать сообщение.")
+        else:
+            print("Map message ID не найден.")
+            await message.answer("Сообщение для редактирования не найдено.")
 
-
-# Обработчик для Место 9
 @dp.message(F.text == "Место 9")
 async def place_9(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
-    if data and data.get("map_message_id"):
-        place_info = "📍 Место 9: Центральная площадь.\n\nЦентр города с отличным видом на архитектуру и площади."
+    if data:
+        map_message_id = data.get("map_message_id")
+        print(f"Map message ID: {map_message_id}")
+        
+        if map_message_id:
+            place_info = "📍 Место 9: Остров Гофмана.\n\nОчаровательный остров с уникальной природой и историей."
 
-        try:
-            await bot.edit_message_text(
-                place_info,
-                chat_id=message.chat.id,
-                message_id=data['map_message_id']
-            )
-        except TelegramBadRequest as e:  # Обработка исключения
-            print(f"Ошибка при редактировании сообщения: {e}")
-            await message.answer("Не удалось отредактировать сообщение.")
+            try:
+                await bot.edit_message_text(
+                    place_info,
+                    chat_id=message.chat.id,
+                    message_id=map_message_id
+                )
+            except TelegramBadRequest as e:
+                print(f"Ошибка при редактировании сообщения: {e}")
+                await message.answer("Не удалось отредактировать сообщение.")
+        else:
+            print("Map message ID не найден.")
+            await message.answer("Сообщение для редактирования не найдено.")
 
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
