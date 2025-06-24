@@ -742,119 +742,126 @@ async def start_rent_real(message: types.Message):
         pass
         #await logger.info(f"Не удалось отправить уведомление админу (начало): {e}")
 
-@dp.message(F.text == "🗺 Что посмотреть?")
+@dp.message(F.text == "Что посмотреть?")
 async def send_map_and_buttons(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
-    if data and data.get("is_renting"):
-        # Отправляем карту с маршрутом и клавиатуру
-        photo_path = "images/route_map.jpg"  # Убедитесь, что указали правильный путь к изображению карты
+    # Отправляем сообщение с картой и клавишами, если оно ещё не отправлено
+    if "map_message_id" not in data:
+        photo_path = "images/route_map.jpg"  # Путь к карте
+
+        # Отправляем карту с текстом и кнопками для всех мест
         sent_message = await message.answer_photo(
             FSInputFile(photo_path),
-            caption="Вот карта с маршрутом. Выберите место, которое хотите посетить!"
+            caption="Вот карта с маршрутом. Выберите место, которое хотите посетить!",
+            reply_markup=types.ReplyKeyboardMarkup(
+                keyboard=[
+                    [types.KeyboardButton("Место 1")],
+                    [types.KeyboardButton("Место 2")],
+                    [types.KeyboardButton("Место 3")],
+                    [types.KeyboardButton("Место 4")],
+                    [types.KeyboardButton("Место 5")],
+                    [types.KeyboardButton("Место 6")],
+                    [types.KeyboardButton("Место 7")],
+                    [types.KeyboardButton("Место 8")],
+                    [types.KeyboardButton("Место 9")],
+                ],
+                resize_keyboard=True,
+            ),
         )
 
-        # Сохраняем ID сообщения с картой, чтобы потом редактировать
-        data['map_message_id'] = sent_message.message_id
-
-        # Создаем клавиатуру с 9 кнопками для разных мест
-        keyboard = types.ReplyKeyboardMarkup(
-            keyboard=[
-                [types.KeyboardButton(text="Место 1")],
-                [types.KeyboardButton(text="Место 2")],
-                [types.KeyboardButton(text="Место 3")],
-                [types.KeyboardButton(text="Место 4")],
-                [types.KeyboardButton(text="Место 5")],
-                [types.KeyboardButton(text="Место 6")],
-                [types.KeyboardButton(text="Место 7")],
-                [types.KeyboardButton(text="Место 8")],
-                [types.KeyboardButton(text="Место 9")],
-            ],
-            resize_keyboard=True
-        )
-
-        # Отправляем клавиатуру с местами
-        await message.answer("Выберите место на маршруте:", reply_markup=keyboard)
-
+        # Сохраняем ID этого сообщения, чтобы редактировать его в дальнейшем
+        user_rent_data[user_id]["map_message_id"] = sent_message.message_id
     else:
-        await message.answer("Ошибка! Аренда не активна. Пожалуйста, начните аренду.", reply_markup=main_menu_keyboard())
+        # Если сообщение уже отправлено, просто обновляем клавиатуру
+        map_message_id = data.get("map_message_id")
+        await bot.edit_message_reply_markup(
+            chat_id=message.chat.id,
+            message_id=map_message_id,
+            reply_markup=types.ReplyKeyboardMarkup(
+                keyboard=[
+                    [types.KeyboardButton("Место 1")],
+                    [types.KeyboardButton("Место 2")],
+                    [types.KeyboardButton("Место 3")],
+                    [types.KeyboardButton("Место 4")],
+                    [types.KeyboardButton("Место 5")],
+                    [types.KeyboardButton("Место 6")],
+                    [types.KeyboardButton("Место 7")],
+                    [types.KeyboardButton("Место 8")],
+                    [types.KeyboardButton("Место 9")],
+                ],
+                resize_keyboard=True,
+            ),
+        )
 
-# Обработчик для Место 1
 @dp.message(F.text == "Место 1")
 async def place_1(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
+    map_message_id = data.get("map_message_id")
 
-    if data:
-        map_message_id = data.get("map_message_id")  # Получаем ID сообщения для редактирования
-        print(f"Map message ID: {map_message_id}")  # Логируем ID сообщения
-        
-        if map_message_id:
-            place_info = "📍 Место 1: Природный парк Куршская коса.\n\nУникальное природное место с песчаными дюнами и лесами, идеальное для прогулок на велосипеде."
+    if map_message_id:
+        place_info = "📍 Место 1: Природный парк Куршская коса.\n\nУникальное природное место с песчаными дюнами и лесами, идеальное для прогулок на велосипеде."
 
-            try:
-                await bot.edit_message_text(
-                    place_info,
-                    chat_id=message.chat.id,
-                    message_id=map_message_id
-                )
-            except TelegramBadRequest as e:
-                print(f"Ошибка при редактировании сообщения: {e}")
-                await message.answer("Не удалось отредактировать сообщение.")
-        else:
-            print("Map message ID не найден.")
-            await message.answer("Сообщение для редактирования не найдено.")
+        try:
+            await bot.edit_message_text(
+                place_info,
+                chat_id=message.chat.id,
+                message_id=map_message_id
+            )
+        except TelegramBadRequest as e:
+            print(f"Ошибка при редактировании сообщения: {e}")
+            await message.answer("Не удалось отредактировать сообщение.")
+    else:
+        print("Map message ID не найден.")
+        await message.answer("Сообщение для редактирования не найдено.")
 
+# Повторяем для других мест (Место 2, Место 3 и т.д.), изменяя описание места.
 @dp.message(F.text == "Место 2")
 async def place_2(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
+    map_message_id = data.get("map_message_id")
 
-    if data:
-        map_message_id = data.get("map_message_id")
-        print(f"Map message ID: {map_message_id}")
-        
-        if map_message_id:
-            place_info = "📍 Место 2: Замок Нессельбек.\n\nИсторический замок с потрясающим видом на Балтийское море."
+    if map_message_id:
+        place_info = "📍 Место 2: Замок Нессельбек.\n\nИсторический замок с потрясающим видом на Балтийское море."
 
-            try:
-                await bot.edit_message_text(
-                    place_info,
-                    chat_id=message.chat.id,
-                    message_id=map_message_id
-                )
-            except TelegramBadRequest as e:
-                print(f"Ошибка при редактировании сообщения: {e}")
-                await message.answer("Не удалось отредактировать сообщение.")
-        else:
-            print("Map message ID не найден.")
-            await message.answer("Сообщение для редактирования не найдено.")
+        try:
+            await bot.edit_message_text(
+                place_info,
+                chat_id=message.chat.id,
+                message_id=map_message_id
+            )
+        except TelegramBadRequest as e:
+            print(f"Ошибка при редактировании сообщения: {e}")
+            await message.answer("Не удалось отредактировать сообщение.")
+    else:
+        print("Map message ID не найден.")
+        await message.answer("Сообщение для редактирования не найдено.")
 
+# Аналогично для других мест:
 @dp.message(F.text == "Место 3")
 async def place_3(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
+    map_message_id = data.get("map_message_id")
 
-    if data:
-        map_message_id = data.get("map_message_id")
-        print(f"Map message ID: {map_message_id}")
-        
-        if map_message_id:
-            place_info = "📍 Место 3: Музей янтаря.\n\nУникальная коллекция янтарных изделий и исторических экспонатов."
+    if map_message_id:
+        place_info = "📍 Место 3: Музей янтаря.\n\nУникальная коллекция янтарных изделий и исторических экспонатов."
 
-            try:
-                await bot.edit_message_text(
-                    place_info,
-                    chat_id=message.chat.id,
-                    message_id=map_message_id
-                )
-            except TelegramBadRequest as e:
-                print(f"Ошибка при редактировании сообщения: {e}")
-                await message.answer("Не удалось отредактировать сообщение.")
-        else:
-            print("Map message ID не найден.")
-            await message.answer("Сообщение для редактирования не найдено.")
+        try:
+            await bot.edit_message_text(
+                place_info,
+                chat_id=message.chat.id,
+                message_id=map_message_id
+            )
+        except TelegramBadRequest as e:
+            print(f"Ошибка при редактировании сообщения: {e}")
+            await message.answer("Не удалось отредактировать сообщение.")
+    else:
+        print("Map message ID не найден.")
+        await message.answer("Сообщение для редактирования не найдено.")
 
 @dp.message(F.text == "Место 4")
 async def place_4(message: types.Message):
