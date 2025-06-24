@@ -244,18 +244,13 @@ def contact_keyboard():
 # -------- Inline клавиатуры -------- #
 
 def create_places_keyboard():
-    # Сначала создаем список кнопок
+    # Создаем список кнопок
     inline_buttons = [
         InlineKeyboardButton(text=f"Место {i}", callback_data=f"place_{i}") for i in range(1, 10)
     ]
     
-    # Создаем клавиатуру и передаем список кнопок в inline_keyboard
-    keyboard = InlineKeyboardMarkup()
-
-    # Разбиваем кнопки на группы по 3 и передаем их в inline_keyboard
-    keyboard.inline_keyboard = [
-        inline_buttons[i:i + 3] for i in range(0, len(inline_buttons), 3)
-    ]
+    # Создаем клавиатуру
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[inline_buttons[i:i+3] for i in range(0, len(inline_buttons), 3)])
 
     return keyboard
 # -------- Обработчики -------- #
