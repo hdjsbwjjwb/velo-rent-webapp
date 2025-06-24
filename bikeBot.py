@@ -1,5 +1,6 @@
 import asyncio
 from aiogram import Bot, Dispatcher, types, F
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.client.default import DefaultBotProperties
 from aiogram.types import FSInputFile
 from datetime import datetime, date
