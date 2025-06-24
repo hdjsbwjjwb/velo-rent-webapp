@@ -775,7 +775,7 @@ async def start_rent_real(message: types.Message):
 async def interesting_places(message: types.Message):
     print("Кнопка 'Что посмотреть?' была нажата.")  # Логируем нажатие кнопки
     # Отправляем изображение карты
-    photo_path = "path_to_map_with_route.jpg"  # Убедитесь, что путь к изображению правильный
+    photo_path = "images/route_map.jpg"  # Убедитесь, что путь к изображению правильный
     photo = FSInputFile(photo_path)
 
     # Отправляем изображение карты с клавиатурой
