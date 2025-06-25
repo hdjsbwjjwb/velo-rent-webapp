@@ -1,48 +1,11 @@
+/* Стили для карты */
+#map {
+    height: 100vh; /* Карта займет весь экран */
+    width: 100%; /* Карта будет растягиваться на всю ширину */
+}
+
+/* Стили для тела страницы */
 body {
-    font-family: Arial, sans-serif;
     margin: 0;
-    padding: 0;
-    background-color: #f0f0f0;
-}
-
-h1 {
-    text-align: center;
-    margin-top: 20px;
-    font-size: 2em;
-}
-
-.map-container {
-    position: relative;
-    max-width: 800px;
-    margin: 0 auto;
-    text-align: center;
-}
-
-.map {
-    width: 100%;
-    height: auto;
-}
-
-.location {
-    position: absolute;
-    background-color: rgba(255, 255, 255, 0.8);
-    padding: 10px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-#location1 { top: 20%; left: 20%; }
-#location2 { top: 40%; left: 50%; }
-#location3 { top: 60%; left: 30%; }
-
-footer {
-    text-align: center;
-    padding: 20px;
-    background-color: #333;
-    color: white;
-}
-
-footer a {
-    color: #ccc;
-    text-decoration: none;
+    font-family: Arial, sans-serif;
 }
