@@ -3,23 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Интерактивная карта</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Карта с маршрутом</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Места для аренды велосипедов</h1>
+    <div id="map"></div> <!-- Контейнер для карты -->
 
-    <div class="map-container">
-        <img src="images/map.png" alt="Карта маршрута" class="map">
-        <div class="location" id="location1">Место 1: Описание</div>
-        <div class="location" id="location2">Место 2: Описание</div>
-        <div class="location" id="location3">Место 3: Описание</div>
-    </div>
-
-    <footer>
-        <p>Связь: <a href="mailto:example@example.com">example@example.com</a></p>
-    </footer>
-
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap" async defer></script>
     <script src="script.js"></script>
 </body>
 </html>
