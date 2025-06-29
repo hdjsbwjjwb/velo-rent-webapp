@@ -1,5 +1,4 @@
 from aiogram import Bot, Dispatcher, types
-from aiogram.types import ParseMode
 from dotenv import load_dotenv
 import os
 
@@ -9,16 +8,17 @@ TOKEN = os.getenv('BOT_TOKEN')  # Новый токен
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
-# Удаление всех сообщений бота в чате
 @dp.message_handler()
 async def handle_message(message: types.Message):
-    try:
-        # Если сообщение от бота, удаляем
-        if message.from_user.is_bot:
+    # Если сообщение нарушает правила, удаляем его
+    if "порно" in message.text.lower():  # Например, ищем слово "порно"
+        try:
+            # Удаляем сообщение
             await message.delete()
-            print(f"Удалено сообщение с ID {message.message_id}")
-    except Exception as e:
-        print(f"Ошибка при удалении сообщения: {e}")
+            # Отправляем ответ пользователю, что сообщение удалено
+            await message.answer("Это сообщение нарушает правила и было удалено.", reply_markup=None)
+        except Exception as e:
+            print(f"Ошибка при удалении сообщения: {e}")
 
 # Запуск бота
 if __name__ == "__main__":
