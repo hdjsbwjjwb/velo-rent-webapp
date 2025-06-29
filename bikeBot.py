@@ -151,6 +151,16 @@ bot = Bot(
 )
 dp = Dispatcher()
 
+@dp.message_handler()
+async def delete_inappropriate_messages(message: types.Message):
+    try:
+        # Проверка на нежелательные слова в сообщении
+        if "Тройничок" in message.text.lower():  # например, ищем слово "порно"
+            await message.delete()  # Удаляем сообщение
+            await message.answer("Это сообщение нарушает правила и было удалено.")
+    except Exception as e:
+        print(f"Ошибка при удалении сообщения: {e}")
+
 async def set_user_commands(bot):
     commands = [
         types.BotCommand(command="support", description="Поддержка"),
