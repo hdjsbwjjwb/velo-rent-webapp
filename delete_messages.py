@@ -1,33 +1,25 @@
-from telethon import TelegramClient
-from dotenv import load_dotenv
+from aiogram import Bot, Dispatcher, types
+from aiogram.types import ParseMode
 import os
 
-# Загружаем переменные из .env
-load_dotenv()
+# Загружаем токен бота
+TOKEN = os.getenv("BOT_TOKEN")
+bot = Bot(token=TOKEN)
+dp = Dispatcher(bot)
 
-# Получаем данные из .env
-api_id = os.getenv('API_ID')
-api_hash = os.getenv('API_HASH')
-bot_token = os.getenv('BOT_TOKEN')
-chat_id = os.getenv('CHAT_ID')  # Используем chat_id из .env
-
-# Подключаемся к Telegram через Telethon
-client = TelegramClient('session_name', api_id, api_hash)
-
-async def delete_all_messages():
-    await client.start(bot_token=bot_token)
-
-    # Получаем последние 100 сообщений
-    messages = await client.get_messages(chat_id, limit=100)
-
-    # Удаляем сообщения
-    for message in messages:
+@dp.message_handler()
+async def handle_message(message: types.Message):
+    # Если сообщение нарушает правила, удаляем его
+    if "Тройничок" in message.text.lower():  # Например, ищем слово "порно"
         try:
-            await client.delete_messages(chat_id, message.id)
-            print(f"Удалено сообщение с ID {message.id}")
+            # Удаляем сообщение
+            await message.delete()
+            # Отправляем ответ пользователю, что сообщение удалено
+            await message.answer("Это сообщение нарушает правила и было удалено.", reply_markup=None)
         except Exception as e:
-            print(f"Не удалось удалить сообщение с ID {message.id}: {e}")
+            print(f"Ошибка при удалении сообщения: {e}")
 
-# Запускаем клиента
-with client:
-    client.loop.run_until_complete(delete_all_messages())
+# Запуск бота
+if __name__ == "__main__":
+    from aiogram import executor
+    executor.start_polling(dp, skip_updates=True)
