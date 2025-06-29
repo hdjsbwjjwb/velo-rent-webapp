@@ -7,9 +7,6 @@ import os
 load_dotenv()
 TOKEN = os.getenv('BOT_TOKEN')  # Новый токен
 
-# Инициализируем бота
-bot = Bot(token=TOKEN)
-
 # Создаем приложение (замена Dispatcher на Application)
 application = Application.builder().token(TOKEN).build()
 
