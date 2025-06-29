@@ -1,14 +1,23 @@
-from aiogram import Bot, Dispatcher, types
+from aiogram import Bot, types
+from aiogram import Dispatcher
+from aiogram.types import ParseMode
+from aiogram.utils import executor
 from dotenv import load_dotenv
 import os
 
 # Загружаем токен из .env
 load_dotenv()
 TOKEN = os.getenv('BOT_TOKEN')  # Новый токен
-bot = Bot(token=TOKEN)
-dp = Dispatcher(bot)
 
-@dp.message_handler()
+# Инициализируем объект бота
+bot = Bot(token=TOKEN)
+
+# Инициализируем объект Application (Dispatcher больше не используется напрямую)
+from aiogram import Application
+application = Application.builder().token(TOKEN).build()
+
+# Обработчик сообщений
+@application.message_handler()
 async def handle_message(message: types.Message):
     # Если сообщение нарушает правила, удаляем его
     if "порно" in message.text.lower():  # Например, ищем слово "порно"
@@ -22,5 +31,5 @@ async def handle_message(message: types.Message):
 
 # Запуск бота
 if __name__ == "__main__":
-    from aiogram import executor
-    executor.start_polling(dp, skip_updates=True)
+    # Запуск приложения
+    application.run_polling()
