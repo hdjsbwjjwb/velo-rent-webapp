@@ -153,9 +153,8 @@ dp = Dispatcher()
 
 async def set_user_commands(bot):
     commands = [
-        types.BotCommand(command="support", description="Поддержка"),
-        types.BotCommand(command="active", description="Активные аренды")
-        # оставляем только команды для обычных пользователей
+        types.BotCommand(command="start", description="Запустить бота"),
+        types.BotCommand(command="help", description="Помощь")
     ]
     await bot.set_my_commands(commands, scope=types.BotCommandScopeDefault())
 
