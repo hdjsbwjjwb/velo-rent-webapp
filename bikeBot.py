@@ -897,7 +897,7 @@ async def stats(message: types.Message):
 
 @dp.message(F.text == "/refresh_commands")
 async def refresh_commands(message: types.Message):
-    if message.from_user.id not in ADMIN_ID:
+    if message.from_user.id != ADMIN_ID:
         await message.answer("Нет доступа.")
         return
     await set_user_commands(bot)
