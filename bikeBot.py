@@ -16,6 +16,7 @@ from collections import Counter
 from dotenv import load_dotenv
 load_dotenv()  # загружает переменные окружения из .env
 TOKEN = os.getenv("BOT_TOKEN")  # получаем токен
+GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
 
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -89,7 +90,7 @@ async def save_rent_to_gsheet(data, duration_min, total_price, period_str):
         ]
         creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
         client = gspread.authorize(creds)
-        sheet = client.open_by_key("1dXcmUr0Dtx1fylu3DaUdZigFwkjTKnPCkPf9OcuiGOE").sheet1
+        sheet = client.open_by_key(os.getenv("GOOGLE_SHEET_ID")).sheet1
         
         cart_human = "\n".join([f"{cat} — {qty}" for cat, qty in data.get("cart", {}).items()])
         
@@ -119,7 +120,7 @@ def get_gsheet_records():
     ]
     creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
     client = gspread.authorize(creds)
-    sheet = client.open_by_key("1dXcmUr0Dtx1fylu3DaUdZigFwkjTKnPCkPf9OcuiGOE").sheet1
+    sheet = client.open_by_key(os.getenv("GOOGLE_SHEET_ID")).sheet1
     records = sheet.get_all_records()
     return records
 
