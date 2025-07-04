@@ -973,10 +973,12 @@ async def send_daily_report():
     await bot.send_message(ADMIN_ID, text)
 
 
+# Обновлённый main с безопасным завершением
 async def main():
-  #  await set_user_commands(bot)
-   # await set_admin_commands(bot, ADMIN_ID)
-    await dp.start_polling(bot)
+    try:
+        await dp.start_polling(bot)
+    finally:
+        await bot.session.close()
     
 if __name__ == "__main__":
     asyncio.run(main())
