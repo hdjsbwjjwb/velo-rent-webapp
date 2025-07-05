@@ -506,7 +506,7 @@ async def start_rent_button(message: types.Message):
     await message.answer("Выберите категорию велосипеда для добавления в корзину:", reply_markup=keyboard)
 
 # 2. Выбор категории — показываем клавиатуру с количеством
-@dp.message(lambda m: any(m.text.startswith(info["emoji"]) for info in bike_categories.values()))
+@dp.message(lambda m: m.text and any(m.text.startswith(info["emoji"]) for info in bike_categories.values()))
 async def select_category(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id, {})
@@ -521,7 +521,7 @@ async def select_category(message: types.Message):
 
     # Определяем, какую категорию нажали
     cat_name = next(
-        (cat for cat,info in bike_categories.items() if message.text.startswith(info["emoji"])),
+        (cat for cat, info in bike_categories.items() if message.text.startswith(info["emoji"])),
         None
     )
     if not cat_name:
@@ -545,6 +545,7 @@ async def select_category(message: types.Message):
         parse_mode="HTML",
         reply_markup=qty_keyboard
     )
+
 
 @dp.message(F.text == "Готово")
 async def finish_rent_finalize(message: types.Message):
@@ -610,14 +611,12 @@ async def finish_rent_finalize(message: types.Message):
 
 
 # 3. Выбор количества — добавляем в корзину и возвращаемся к выбору категории
-@dp.message(lambda m: m.from_user.id in user_rent_data 
-                        and user_rent_data[m.from_user.id].get("awaiting_quantity")
-                        and m.text.isdigit())
+@dp.message(lambda m: m.text and m.text.isdigit()
+                    and user_rent_data.get(m.from_user.id, {}).get("awaiting_quantity"))
 async def select_quantity(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data[user_id]
 
-    # Берём число
     qty = int(message.text)
     cat = data["last_category"]
 
