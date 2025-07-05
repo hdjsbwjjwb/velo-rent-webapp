@@ -218,6 +218,14 @@ def contact_keyboard():
         resize_keyboard=True
     )
 
+# Клавиатура для оставления отзыва
+def review_keyboard():
+    return types.ReplyKeyboardMarkup(
+        keyboard=[
+            [types.KeyboardButton(text="Оставить отзыв")]
+        ],
+        resize_keyboard=True
+    )
 # -------- Inline клавиатуры -------- #
 
 
@@ -552,20 +560,24 @@ async def finish_rent_finalize(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
+    # Проверяем, что аренда активна и мы в режиме сдачи
     if not data or not data.get("is_renting") or not data.get("awaiting_bike_selection"):
         await message.answer("Вы ещё не завершаете аренду или аренда не активна.")
         return
 
+    # Отключаем режим сдачи
     data["awaiting_bike_selection"] = False
+
+    # Считаем время поездки
     end_time = datetime.now(KALININGRAD_TZ)
     start_time = data["start_time"]
     duration = end_time - start_time
     total_minutes = int(duration.total_seconds() / 60)
 
-    # округление до 15 минут
+    # Округляем до 15 минут
     pay_minutes = max(15, round(total_minutes / 15) * 15)
 
-    # расчёт стоимости
+    # Расчёт стоимости
     total_price = 0
     cart_lines = []
     for cat, qty in data["cart"].items():
@@ -576,6 +588,7 @@ async def finish_rent_finalize(message: types.Message):
 
     cart_str = "\n".join(cart_lines)
 
+    # Отправляем итоговое сообщение пользователю
     await message.answer(
         f"<b>Аренда завершена!</b>\n"
         f"<b>Время в пути:</b> <u>{total_minutes} мин</u>\n"
@@ -587,18 +600,23 @@ async def finish_rent_finalize(message: types.Message):
         parse_mode="HTML"
     )
 
-    # уведомление админу
+    # Уведомление админу
     await bot.send_message(
         ADMIN_ID,
-        f"ЗАВЕРШЕНА АРЕНДА!\n"
-        f"Пользователь: {message.from_user.full_name}\n"
-        f"Телефон: {data.get('phone') or 'не указан'}\n"
-        f"Время: {start_time.strftime('%H:%M')} — {end_time.strftime('%H:%M')} ({total_minutes} мин)\n"
-        f"Корзина: {data['cart']}\n"
-        f"Сумма: {total_price}₽"
+        (
+            "ЗАВЕРШЕНА АРЕНДА!\n"
+            f"Пользователь: {message.from_user.full_name}\n"
+            f"Телефон: {data.get('phone') or 'не указан'}\n"
+            f"Время: {start_time.strftime('%H:%M')} — {end_time.strftime('%H:%M')} ({total_minutes} мин)\n"
+            f"Корзина: {data['cart']}\n"
+            f"Сумма: {total_price} ₽"
+        )
     )
 
-    # сброс состояния
+    # Сохраняем в Google Sheets, если нужно
+    # await save_rent_to_gsheet(...)
+
+    # Сброс состояния пользователя
     user_rent_data[user_id] = {
         "cart": {},
         "start_time": None,
@@ -607,8 +625,11 @@ async def finish_rent_finalize(message: types.Message):
         "awaiting_bike_selection": False,
     }
 
-    await message.answer("Готово! Можете взять велосипед снова.", reply_markup=categories_keyboard())
-
+    # Вместо возврата к категориям — показываем кнопку «Оставить отзыв»
+    await message.answer(
+        "Готово! Спасибо за поездку 😊\n\nЕсли хотите, оставьте отзыв:",
+        reply_markup=review_keyboard()
+    )
 
 # 3. Выбор количества — добавляем в корзину и возвращаемся к выбору категории
 @dp.message(lambda m: m.text and m.text.isdigit()
