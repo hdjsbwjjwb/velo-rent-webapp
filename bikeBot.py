@@ -505,28 +505,33 @@ async def start_rent_button(message: types.Message):
     keyboard = categories_keyboard()
     await message.answer("Выберите категорию велосипеда для добавления в корзину:", reply_markup=keyboard)
 
+# 2. Выбор категории — показываем клавиатуру с количеством
 @dp.message(lambda m: any(m.text.startswith(info["emoji"]) for info in bike_categories.values()))
 async def select_category(message: types.Message):
     user_id = message.from_user.id
-    data = user_rent_data.get(user_id)
+    data = user_rent_data.get(user_id, {})
 
-    # доступно только в режиме сдачи
-    if not (data and data.get("is_renting") and data.get("awaiting_bike_selection")):
-        return await message.answer("Сейчас нельзя выбирать велосипеды.")
+    # Работает только в процессе сдачи
+    if not (data.get("is_renting") and data.get("awaiting_bike_selection")):
+        return
 
-    # если уже ждем количество — не обрабатываем повторно
+    # Если уже ждём количество — не показываем категорию повторно
     if data.get("awaiting_quantity"):
         return
 
-    # определяем категорию
+    # Определяем, какую категорию нажали
     cat_name = next(
-        cat for cat, info in bike_categories.items()
-        if message.text.startswith(info["emoji"])
+        (cat for cat,info in bike_categories.items() if message.text.startswith(info["emoji"])),
+        None
     )
+    if not cat_name:
+        return await message.answer("Не удалось распознать категорию. Попробуйте ещё раз.")
+
+    # Сохраняем для следующего шага
     data["last_category"] = cat_name
     data["awaiting_quantity"] = True
 
-    # клавиатура выбора количества
+    # Клавиатура выбора количества
     qty_keyboard = types.ReplyKeyboardMarkup(
         keyboard=[
             [types.KeyboardButton(text=str(q)) for q in QUANTITY_CHOICES],
@@ -536,7 +541,7 @@ async def select_category(message: types.Message):
         resize_keyboard=True
     )
     await message.answer(
-        f"Сколько велосипедов категории <b>{cat_name}</b> вы брали?",
+        f"Сколько велосипедов категории <b>{cat_name}</b> вы сдаёте?",
         parse_mode="HTML",
         reply_markup=qty_keyboard
     )
@@ -604,30 +609,33 @@ async def finish_rent_finalize(message: types.Message):
     await message.answer("Готово! Можете взять велосипед снова.", reply_markup=categories_keyboard())
 
 
-@dp.message(lambda m: m.from_user.id in user_rent_data and user_rent_data[m.from_user.id]["awaiting_quantity"])
+# 3. Выбор количества — добавляем в корзину и возвращаемся к выбору категории
+@dp.message(lambda m: m.from_user.id in user_rent_data 
+                        and user_rent_data[m.from_user.id].get("awaiting_quantity")
+                        and m.text.isdigit())
 async def select_quantity(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data[user_id]
-    if message.text == "Назад к выбору категории":
-        await back_to_category(message)
-        return
-    try:
-        qty = int(message.text)
-        if qty not in QUANTITY_CHOICES:
-            raise ValueError
-    except ValueError:
-        await message.answer("Пожалуйста, выберите количество только из кнопок ниже!")
-        return
+
+    # Берём число
+    qty = int(message.text)
     cat = data["last_category"]
+
+    # Добавляем в корзину
     data["cart"][cat] = data["cart"].get(cat, 0) + qty
+
+    # Сбрасываем флаги ожидания
     data["awaiting_quantity"] = False
     data["last_category"] = None
-    keyboard = categories_keyboard()
+
+    # Возвращаемся к выбору категорий
     await message.answer(
-        f"Добавлено {qty} |{cat}| велосипед(а).\n\n"
-        "Добавьте ещё и нажмите <b>«Начать аренду»</b>.",
-        reply_markup=keyboard
+        f"Добавлено {qty} × <b>{cat}</b> (в корзине: {data['cart'][cat]})\n\n"
+        "Если ещё сдаёте — выберите следующую категорию, иначе нажмите «Готово».",
+        parse_mode="HTML",
+        reply_markup=categories_keyboard()
     )
+
 
 @dp.message(F.text == "Посмотреть корзину")
 async def view_cart(message: types.Message):
@@ -751,52 +759,27 @@ async def interesting_places(message: types.Message):
         await message.answer("Ошибка! Аренда не активна. Пожалуйста, начните аренду.", reply_markup=main_menu_keyboard())  # Если аренда не активна
 
 
+# 1. Начало сдачи: включаем режим выбора и сбрасываем счётчики
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
-    if not data or not data["is_renting"]:
-        await message.answer("Вы ещё не начали аренду.")
-        return
+    # Если аренда не активна — выходим
+    if not data or not data.get("is_renting"):
+        return await message.answer("Аренда не активна. Начните с /start.")
 
-    # Сбросим корзину и активируем режим выбора
-    data["cart"] = {}
+    # Включаем режим сдачи: теперь можно выбирать велосипеды
+    data["awaiting_bike_selection"] = True
     data["awaiting_quantity"] = False
     data["last_category"] = None
-    data["awaiting_bike_selection"] = True  # <-- Новый флаг
+    # Очищать старую корзину не нужно — мы хотим накапливать выбор
 
     await message.answer(
-        "📝 Перед завершением аренды, укажите какие велосипеды вы брали.\n\nВыберите категорию:",
+        "📝 Укажите, какие велосипеды вы сдаёте.\n\nВыберите категорию:",
         reply_markup=categories_keyboard()
     )
 
-
-    # --- Сохраняем в Google Sheets ---
-    period_str = f"{date.today().isoformat()} {start_time.strftime('%H:%M')} — {end_time.strftime('%H:%M')}"
-    await save_rent_to_gsheet({
-        "user_id": message.from_user.id,
-        "user_name": message.from_user.full_name,
-        "phone": data.get("phone"),
-        "cart": data.get("cart"),
-    }, pay_minutes, total_price, period_str)
-
-    # --- Сброс данных аренды ---
-    user_rent_data[user_id] = {
-        "cart": {},
-        "start_time": None,
-        "awaiting_quantity": False,
-        "last_category": None,
-        "is_renting": False,
-        "phone": data.get("phone"),
-        "asked_phone": False,
-    }
-
-    keyboard = categories_keyboard()
-    await message.answer(
-        "Аренда завершена! Можете выбрать велосипеды для новой аренды:",
-        reply_markup=keyboard
-    )
 
 @dp.message(F.text == "/stats")
 async def stats(message: types.Message):
