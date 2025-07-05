@@ -505,32 +505,40 @@ async def start_rent_button(message: types.Message):
     keyboard = categories_keyboard()
     await message.answer("Выберите категорию велосипеда для добавления в корзину:", reply_markup=keyboard)
 
-@dp.message(lambda m: any(m.text and m.text.startswith(bike_categories[cat]['emoji']) for cat in bike_categories))
+@dp.message(lambda m: any(m.text.startswith(info["emoji"]) for info in bike_categories.values()))
 async def select_category(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
-    if not data or not data.get("is_renting"):
-        await message.answer("Сначала начните аренду — введите /start", reply_markup=types.ReplyKeyboardRemove())
+    # доступно только в режиме сдачи
+    if not (data and data.get("is_renting") and data.get("awaiting_bike_selection")):
+        return await message.answer("Сейчас нельзя выбирать велосипеды.")
+
+    # если уже ждем количество — не обрабатываем повторно
+    if data.get("awaiting_quantity"):
         return
 
-    if not data.get("awaiting_bike_selection"):
-        await message.answer("Сейчас вы не можете выбирать велосипеды. Используйте это при завершении аренды.")
-        return
-
-    # выбор при завершении аренды
+    # определяем категорию
     cat_name = next(
-        (cat for cat, info in bike_categories.items() if message.text.startswith(info["emoji"])),
-        None
+        cat for cat, info in bike_categories.items()
+        if message.text.startswith(info["emoji"])
     )
-    if not cat_name:
-        await message.answer("Не удалось распознать категорию. Попробуйте снова.")
-        return
+    data["last_category"] = cat_name
+    data["awaiting_quantity"] = True
 
-    data["cart"][cat_name] = data["cart"].get(cat_name, 0) + 1
+    # клавиатура выбора количества
+    qty_keyboard = types.ReplyKeyboardMarkup(
+        keyboard=[
+            [types.KeyboardButton(text=str(q)) for q in QUANTITY_CHOICES],
+            [types.KeyboardButton(text="Назад к выбору категории")],
+            [types.KeyboardButton(text="Готово")]
+        ],
+        resize_keyboard=True
+    )
     await message.answer(
-        f"Добавлен 1 велосипед категории <b>{cat_name}</b>.\n\nВыберите следующую категорию или нажмите <b>«Готово»</b>.",
-        reply_markup=categories_keyboard()
+        f"Сколько велосипедов категории <b>{cat_name}</b> вы брали?",
+        parse_mode="HTML",
+        reply_markup=qty_keyboard
     )
 
 @dp.message(F.text == "Готово")
@@ -625,28 +633,42 @@ async def select_quantity(message: types.Message):
 async def view_cart(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
-    if not data or not data["cart"]:
-        await message.answer("Ваша корзина пуста! Добавьте велосипеды для аренды.", reply_markup=categories_keyboard())
+
+    if not data or not data.get("is_renting"):
+        await message.answer("Аренда не активна.")
         return
-    cart_str = "\n".join([
-        f"{bike_categories[cat]['emoji']} <b>{cat}</b>: {cnt} шт. ({bike_categories[cat]['hour']}₽/ч)"
-        for cat, cnt in data["cart"].items()
-    ])
-    total_hour_price = sum([bike_categories[cat]['hour'] * cnt for cat, cnt in data["cart"].items()])
+
+    if not data["cart"]:
+        await message.answer("Корзина пуста.")
+        return
+
+    cart_lines = []
+    total_hour_price = 0
+    for cat, qty in data["cart"].items():
+        price_per_hour = bike_categories[cat]["hour"]
+        cart_lines.append(f"{bike_categories[cat]['emoji']} <b>{cat}</b>: {qty} шт. ({price_per_hour}₽/ч)")
+        total_hour_price += price_per_hour * qty
+
+    cart_text = "\n".join(cart_lines)
     await message.answer(
-        f"В вашей корзине:\n{cart_str}\n━━━━━━━━━━━━━━━━━━━━\n<b>Общая стоимость за 1 час: {total_hour_price}₽</b>",
-        reply_markup=cart_keyboard()
+        f"<b>Ваша корзина:</b>\n{cart_text}\n━━━━━━━━━━━━━━━━━━━━\n"
+        f"<b>Стоимость за 1 час:</b> {total_hour_price}₽",
+        parse_mode="HTML"
     )
+
 
 @dp.message(F.text == "Очистить корзину")
 async def clear_cart(message: types.Message):
     user_id = message.from_user.id
-    if user_id in user_rent_data:
-        user_rent_data[user_id]["cart"] = {}
-        user_rent_data[user_id]["is_renting"] = False
-        user_rent_data[user_id]["start_time"] = None
-    keyboard = categories_keyboard()
-    await message.answer("Корзина очищена! Можете выбрать велосипеды снова.", reply_markup=keyboard)
+    data = user_rent_data.get(user_id)
+
+    if not data or not data.get("is_renting"):
+        await message.answer("Аренда не активна.")
+        return
+
+    data["cart"] = {}
+    await message.answer("Корзина очищена! Можете выбрать категории снова.", reply_markup=categories_keyboard())
+
 
 @dp.callback_query(F.data == "back_to_cart")
 async def back_to_cart(callback: types.CallbackQuery):
