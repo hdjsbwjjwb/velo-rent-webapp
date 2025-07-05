@@ -681,20 +681,17 @@ async def handle_contact(message: types.Message):
     data = user_rent_data.get(user_id)
 
     if not data:
-        await message.answer("Пожалуйста, начните оформление аренды сначала через /start.")
+        await message.answer("Пожалуйста, начните сначала с команды /start.")
         return
 
     phone = message.contact.phone_number
     data["phone"] = phone
     data["asked_phone"] = False
 
-    await message.answer("Спасибо! Ваш номер сохранён. Оформляем аренду…")
-    try:
-        await start_rent_real(message)
-    except Exception as e:
-        #await logger.info(f"Ошибка при записи в Google Таблицу: {e}")
-        await message.answer(f"Ошибка при запуске аренды: {e}")
-        #await logger.info("Ошибка при запуске аренды:", e)
+    await message.answer("Спасибо! Ваш номер сохранён. Аренда началась ✅")
+
+    # сразу запускаем аренду (без корзины)
+    await start_rent_real(message)
 
 async def start_rent_real(message: types.Message):
     user_id = message.from_user.id
@@ -702,29 +699,16 @@ async def start_rent_real(message: types.Message):
     data["start_time"] = datetime.now(KALININGRAD_TZ)
     data["is_renting"] = True
     keyboard = during_rent_keyboard()
-    #await logger.info(f"Аренда началась: {message.from_user.full_name}, id: {user_id}, телефон: {data.get('phone')}")
 
-    cart_str = "\n".join([
-    f"• <b>{cat}</b> — <b>{qty}</b> шт. <i>({bike_categories[cat]['hour']}₽/ч)</i>"
-    for cat, qty in data["cart"].items()
-    ])
-    total_hour_price = sum([bike_categories[cat]['hour'] * qty for cat, qty in data["cart"].items()])
-
-    # --- КРАСИВОЕ СООБЩЕНИЕ ДЛЯ ПОЛЬЗОВАТЕЛЯ ---
     await message.answer(
         f"<b>Аренда началась!</b>\n"
         f"<b>Время старта:</b> <u>{data['start_time'].strftime('%H:%M')}</u>\n"
         "━━━━━━━━━━━━━━━━\n"
-        f"<b>Вы взяли:</b>\n{cart_str}\n"
-        "━━━━━━━━━━━━━━━━\n"
-        f"💸 <b>Стоимость за 1 час:</b> <u>{total_hour_price} руб.</u>\n"
-        "━━━━━━━━━━━━━━━━\n"
-        "Желаем вам приятной поездке 😊",
-        reply_markup=keyboard,
-        parse_mode="HTML"
+        "Хорошей поездки! 🚴‍♂️",
+        reply_markup=keyboard
     )
 
-    # --- Уведомление админу ---
+    # Уведомление админу
     try:
         await bot.send_message(
             ADMIN_ID,
@@ -733,12 +717,10 @@ async def start_rent_real(message: types.Message):
             f"Телефон: {data['phone'] if data['phone'] else 'Не указан'}\n"
             f"id: {message.from_user.id}\n"
             f"Время: {data['start_time'].strftime('%H:%M')}\n"
-            f"Корзина:\n{cart_str}"
+            f"Велосипеды пока не указаны."
         )
-    except Exception as e:
-        
+    except:
         pass
-        #await logger.info(f"Не удалось отправить уведомление админу (начало): {e}")
 
 @dp.message(F.text == "🗺 Что посмотреть?")
 async def interesting_places(message: types.Message):
