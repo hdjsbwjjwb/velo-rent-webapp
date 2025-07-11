@@ -707,6 +707,20 @@ async def clear_cart(message: types.Message):
     data["cart"] = {}
     await message.answer("Корзина очищена! Можете выбрать категории снова.", reply_markup=categories_keyboard())
 
+@dp.message(F.text == "Назад к выбору категории")
+async def back_to_bike_selection(message: types.Message):
+    user_id = message.from_user.id
+    data = user_rent_data.get(user_id)
+
+    # Убедимся, что мы в процессе сдачи и корзина есть
+    if not data or not data.get("is_renting") or not data.get("awaiting_bike_selection"):
+        return await message.answer("Сейчас возврат к выбору недоступен.")
+
+    # Возвращаем пользователя к списку категорий велосипедов
+    await message.answer(
+        "Выберите категорию велосипеда, который сдаёте:",
+        reply_markup=categories_keyboard()
+    )
 
 @dp.callback_query(F.data == "back_to_cart")
 async def back_to_cart(callback: types.CallbackQuery):
