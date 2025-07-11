@@ -669,26 +669,29 @@ async def view_cart(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)
 
-    if not data or not data.get("is_renting"):
-        await message.answer("Аренда не активна.")
+    # Если корзина пуста или аренда не начата
+    if not data or not data.get("cart"):
+        await message.answer(
+            "Ваша корзина пуста! Добавьте велосипеды для аренды.",
+            reply_markup=categories_keyboard()
+        )
         return
 
-    if not data["cart"]:
-        await message.answer("Корзина пуста.")
-        return
+    # Формируем строку корзины
+    cart_str = "\n".join([
+        f"{bike_categories[cat]['emoji']} <b>{cat}</b>: {cnt} шт. ({bike_categories[cat]['hour']}₽/ч)"
+        for cat, cnt in data["cart"].items()
+    ])
+    # Считаем стоимость за 1 час
+    total_hour_price = sum(bike_categories[cat]['hour'] * cnt for cat, cnt in data["cart"].items())
 
-    cart_lines = []
-    total_hour_price = 0
-    for cat, qty in data["cart"].items():
-        price_per_hour = bike_categories[cat]["hour"]
-        cart_lines.append(f"{bike_categories[cat]['emoji']} <b>{cat}</b>: {qty} шт. ({price_per_hour}₽/ч)")
-        total_hour_price += price_per_hour * qty
-
-    cart_text = "\n".join(cart_lines)
+    # Отправляем сообщение с клавиатурой cart_keyboard()
     await message.answer(
-        f"<b>Ваша корзина:</b>\n{cart_text}\n━━━━━━━━━━━━━━━━━━━━\n"
-        f"<b>Стоимость за 1 час:</b> {total_hour_price}₽",
-        parse_mode="HTML"
+        f"В вашей корзине:\n{cart_str}\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        f"<b>Общая стоимость за 1 час: {total_hour_price}₽</b>",
+        parse_mode="HTML",
+        reply_markup=cart_keyboard()
     )
 
 
