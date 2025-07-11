@@ -743,7 +743,6 @@ async def handle_contact(message: types.Message):
     data["phone"] = phone
     data["asked_phone"] = False
 
-    await message.answer("Спасибо! Ваш номер сохранён. Аренда началась ✅")
 
     # сразу запускаем аренду (без корзины)
     await start_rent_real(message)
