@@ -530,41 +530,37 @@ async def select_category(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id, {})
 
-    # Работает только в процессе сдачи
     if not (data.get("is_renting") and data.get("awaiting_bike_selection")):
         return
 
-    # Если уже ждём количество — не показываем категорию повторно
     if data.get("awaiting_quantity"):
         return
 
-    # Определяем, какую категорию нажали
+    # Определяем категорию
     cat_name = next(
-        (cat for cat, info in bike_categories.items() if message.text.startswith(info["emoji"])),
+        (cat for cat,info in bike_categories.items() if message.text.startswith(info["emoji"])),
         None
     )
     if not cat_name:
-        return await message.answer("Не удалось распознать категорию. Попробуйте ещё раз.")
+        return await message.answer("Не удалось распознать категорию.")
 
-    # Сохраняем для следующего шага
-    data["last_category"] = cat_name
+    data["last_category"]   = cat_name
     data["awaiting_quantity"] = True
 
-    # Клавиатура выбора количества
+    # Вот новая однострочная клавиатура без «Назад»
     qty_keyboard = types.ReplyKeyboardMarkup(
         keyboard=[
             [types.KeyboardButton(text=str(q)) for q in QUANTITY_CHOICES],
-            [types.KeyboardButton(text="Назад к выбору категории")],
             [types.KeyboardButton(text="Готово")]
         ],
         resize_keyboard=True
     )
+
     await message.answer(
         f"Сколько велосипедов категории <b>{cat_name}</b> вы сдаёте?",
         parse_mode="HTML",
         reply_markup=qty_keyboard
     )
-
 
 @dp.message(F.text == "Готово")
 async def finish_rent_finalize(message: types.Message):
