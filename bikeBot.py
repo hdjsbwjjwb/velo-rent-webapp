@@ -211,7 +211,7 @@ def cart_keyboard():
 def during_rent_keyboard():
     return types.ReplyKeyboardMarkup(
         keyboard=[
-           # [types.KeyboardButton(text="🗺 Что посмотреть?")],
+            [types.KeyboardButton(text="🗺 Что посмотреть?")],
             [types.KeyboardButton(text="📞 Поддержка")],  # Кнопка для поддержки
             [types.KeyboardButton(text="⏱ Сколько времени катаюсь?")],  # Кнопка для времени
             [types.KeyboardButton(text="🔴 Завершить аренду")],  # Кнопка для завершения аренды
@@ -746,13 +746,16 @@ async def interesting_places(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data.get(user_id)  # Получаем данные о пользователе
 
-    if data and data.get("is_renting"):  # Проверяем, что аренда активна
-        # Генерация или получение маршрута интересных мест
-        route = "Ваш маршрут по интересным местам:\n1. Место 1\n2. Место 2\n3. Место 3"  # Пример маршрута
-        await message.answer(route, reply_markup=during_rent_keyboard())  # Отправляем маршрут с клавиатурой
+    if data and data.get("is_renting"):
+        # Создаём кнопку с веб-приложением (миниаппом)
+        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        keyboard.add(types.KeyboardButton(
+            text="Открыть карту",
+            web_app=WebAppInfo(url="https://hdjsbwjjwb.github.io/miniapp/")  # ← сюда вставьте ссылку на вашу карту
+        ))
+        await message.answer("Выберите интересное место на карте:", reply_markup=keyboard)
     else:
-        await message.answer("Ошибка! Аренда не активна. Пожалуйста, начните аренду.", reply_markup=main_menu_keyboard())  # Если аренда не активна
-
+        await message.answer("Ошибка! Аренда не активна. Пожалуйста, начните аренду.", reply_markup=main_menu_keyboard())
 
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
