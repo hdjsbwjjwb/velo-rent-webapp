@@ -676,6 +676,7 @@ async def back_to_cart(callback: types.CallbackQuery):
     )
 
 async def start_rent_real(message: types.Message):
+    print(f"[DEBUG] Запущен start_rent_real для user_id: {user_id}")
     user_id = message.from_user.id
     data = user_rent_data[user_id]
     data["start_time"] = datetime.now(KALININGRAD_TZ)
