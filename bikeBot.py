@@ -744,18 +744,22 @@ async def start_rent_real(message: types.Message):
 @dp.message(F.text == "🗺 Что посмотреть?")
 async def interesting_places(message: types.Message):
     user_id = message.from_user.id
-    data = user_rent_data.get(user_id)  # Получаем данные о пользователе
+    data = user_rent_data.get(user_id)
 
     if data and data.get("is_renting"):
-        # Создаём кнопку с веб-приложением (миниаппом)
-        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        keyboard.add(types.KeyboardButton(
-            text="Открыть карту",
-            web_app=WebAppInfo(url="https://hdjsbwjjwb.github.io/miniapp/")  # ← сюда вставьте ссылку на вашу карту
-        ))
+        keyboard = types.ReplyKeyboardMarkup(
+            keyboard=[
+                [types.KeyboardButton(
+                    text="Открыть карту",
+                    web_app=types.WebAppInfo(url="https://hdjsbwjjwb.github.io/miniapp/")
+                )]
+            ],
+            resize_keyboard=True
+        )
         await message.answer("Выберите интересное место на карте:", reply_markup=keyboard)
     else:
         await message.answer("Ошибка! Аренда не активна. Пожалуйста, начните аренду.", reply_markup=main_menu_keyboard())
+
 
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
