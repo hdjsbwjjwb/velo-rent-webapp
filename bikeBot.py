@@ -211,7 +211,6 @@ def cart_keyboard():
 def during_rent_keyboard():
     return types.ReplyKeyboardMarkup(
         keyboard=[
-            [types.KeyboardButton(text="🗺 Что посмотреть?")],
             [types.KeyboardButton(text="📞 Поддержка")],  # Кнопка для поддержки
             [types.KeyboardButton(text="⏱ Сколько времени катаюсь?")],  # Кнопка для времени
             [types.KeyboardButton(text="🔴 Завершить аренду")],  # Кнопка для завершения аренды
@@ -676,42 +675,23 @@ async def back_to_cart(callback: types.CallbackQuery):
         reply_markup=cart_keyboard()  # Возвращаем клавиатуру корзины
     )
 
-@dp.message(lambda m: m.contact is not None)
-async def handle_contact(message: types.Message):
-    user_id = message.from_user.id
-    data = user_rent_data.get(user_id)
-
-    if not data:
-        await message.answer("Пожалуйста, начните оформление аренды сначала через /start.")
-        return
-
-    phone = message.contact.phone_number
-    data["phone"] = phone
-    data["asked_phone"] = False
-
-    await message.answer("Спасибо! Ваш номер сохранён. Оформляем аренду…")
-    try:
-        await start_rent_real(message)
-    except Exception as e:
-        #await logger.info(f"Ошибка при записи в Google Таблицу: {e}")
-        await message.answer(f"Ошибка при запуске аренды: {e}")
-        #await logger.info("Ошибка при запуске аренды:", e)
-
 async def start_rent_real(message: types.Message):
     user_id = message.from_user.id
     data = user_rent_data[user_id]
     data["start_time"] = datetime.now(KALININGRAD_TZ)
     data["is_renting"] = True
     keyboard = during_rent_keyboard()
-    #await logger.info(f"Аренда началась: {message.from_user.full_name}, id: {user_id}, телефон: {data.get('phone')}")
 
     cart_str = "\n".join([
-    f"• <b>{cat}</b> — <b>{qty}</b> шт. <i>({bike_categories[cat]['hour']}₽/ч)</i>"
-    for cat, qty in data["cart"].items()
+        f"• <b>{cat}</b> — <b>{qty}</b> шт. <i>({bike_categories[cat]['hour']}₽/ч)</i>"
+        for cat, qty in data["cart"].items()
     ])
-    total_hour_price = sum([bike_categories[cat]['hour'] * qty for cat, qty in data["cart"].items()])
+    total_hour_price = sum([
+        bike_categories[cat]['hour'] * qty
+        for cat, qty in data["cart"].items()
+    ])
 
-    # --- КРАСИВОЕ СООБЩЕНИЕ ДЛЯ ПОЛЬЗОВАТЕЛЯ ---
+    # Сообщение о старте аренды
     await message.answer(
         f"<b>Аренда началась!</b>\n"
         f"<b>Время старта:</b> <u>{data['start_time'].strftime('%H:%M')}</u>\n"
@@ -725,7 +705,16 @@ async def start_rent_real(message: types.Message):
         parse_mode="HTML"
     )
 
-    # --- Уведомление админу ---
+    # Inline-кнопка миниаппа
+    inline_keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+        [types.InlineKeyboardButton(
+            text="🗺 Что посмотреть?",
+            web_app=types.WebAppInfo(url="https://hdjsbwjjwb.github.io/miniapp/")
+        )]
+    ])
+    await message.answer("Откройте карту с интересными местами:", reply_markup=inline_keyboard)
+
+    # Уведомление админу
     try:
         await bot.send_message(
             ADMIN_ID,
@@ -736,29 +725,8 @@ async def start_rent_real(message: types.Message):
             f"Время: {data['start_time'].strftime('%H:%M')}\n"
             f"Корзина:\n{cart_str}"
         )
-    except Exception as e:
-        
+    except Exception:
         pass
-        #await logger.info(f"Не удалось отправить уведомление админу (начало): {e}")
-
-@dp.message(F.text == "🗺 Что посмотреть?")
-async def interesting_places(message: types.Message):
-    user_id = message.from_user.id
-    data = user_rent_data.get(user_id)
-
-    if data and data.get("is_renting"):
-        keyboard = types.ReplyKeyboardMarkup(
-            keyboard=[
-                [types.KeyboardButton(
-                    text="Открыть карту",
-                    web_app=types.WebAppInfo(url="https://hdjsbwjjwb.github.io/miniapp/")
-                )]
-            ],
-            resize_keyboard=True
-        )
-        await message.answer("Выберите интересное место на карте:", reply_markup=keyboard)
-    else:
-        await message.answer("Ошибка! Аренда не активна. Пожалуйста, начните аренду.", reply_markup=main_menu_keyboard())
 
 
 @dp.message(F.text == "🔴 Завершить аренду")
