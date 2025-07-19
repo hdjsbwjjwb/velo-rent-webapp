@@ -691,30 +691,37 @@ async def start_rent_real(message: types.Message):
         for cat, qty in data["cart"].items()
     ])
 
-    # Сообщение о старте аренды
-    await message.answer(
-        f"<b>Аренда началась!</b>\n"
-        f"<b>Время старта:</b> <u>{data['start_time'].strftime('%H:%M')}</u>\n"
-        "━━━━━━━━━━━━━━━━\n"
-        f"<b>Вы взяли:</b>\n{cart_str}\n"
-        "━━━━━━━━━━━━━━━━\n"
-        f"💸 <b>Стоимость за 1 час:</b> <u>{total_hour_price} руб.</u>\n"
-        "━━━━━━━━━━━━━━━━\n"
-        "Желаем вам приятной поездке 😊",
-        reply_markup=keyboard,
-        parse_mode="HTML"
-    )
+    # --- Защита при отправке сообщения ---
+    try:
+        await message.answer(
+            f"<b>Аренда началась!</b>\n"
+            f"<b>Время старта:</b> <u>{data['start_time'].strftime('%H:%M')}</u>\n"
+            "━━━━━━━━━━━━━━━━\n"
+            f"<b>Вы взяли:</b>\n{cart_str}\n"
+            "━━━━━━━━━━━━━━━━\n"
+            f"💸 <b>Стоимость за 1 час:</b> <u>{total_hour_price} руб.</u>\n"
+            "━━━━━━━━━━━━━━━━\n"
+            "Желаем вам приятной поездке 😊",
+            reply_markup=keyboard,
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        await message.answer(f"❗ Ошибка при отправке сообщения об аренде: {e}")
+        return  # не продолжаем, если основное сообщение не отправилось
 
-    # Inline-кнопка миниаппа
-    inline_keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-        [types.InlineKeyboardButton(
-            text="🗺 Что посмотреть?",
-            web_app=types.WebAppInfo(url="https://hdjsbwjjwb.github.io/miniapp/")
-        )]
-    ])
-    await message.answer("Откройте карту с интересными местами:", reply_markup=inline_keyboard)
+    # --- Inline-кнопка миниаппа ---
+    try:
+        inline_keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+            [types.InlineKeyboardButton(
+                text="🗺 Что посмотреть?",
+                web_app=types.WebAppInfo(url="https://hdjsbwjjwb.github.io/miniapp/")
+            )]
+        ])
+        await message.answer("Откройте карту с интересными местами:", reply_markup=inline_keyboard)
+    except Exception as e:
+        await message.answer(f"⚠️ Ошибка при отправке inline-кнопки: {e}")
 
-    # Уведомление админу
+    # --- Уведомление админу ---
     try:
         await bot.send_message(
             ADMIN_ID,
@@ -726,8 +733,7 @@ async def start_rent_real(message: types.Message):
             f"Корзина:\n{cart_str}"
         )
     except Exception:
-        pass
-
+        pass  # Не мешаем пользователю, если уведомление админу не сработало
 
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
