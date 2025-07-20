@@ -654,18 +654,15 @@ async def start_rent_preview(message: types.Message):
         reply_markup=contact_keyboard()
     )
     data["asked_phone"] = True
-
-    # 2) Шлём отдельным сообщением Inline-кнопку «Открыть маршрут»
-    builder = InlineKeyboardBuilder()
-    builder.button(
-        text='🗺 Открыть маршрут',
-        url=MAP_SITE_URL
+###
+    markup = types.InlineKeyboardMarkup(
+        inline_keyboard=[[
+            types.InlineKeyboardButton(text='🗺 Открыть маршрут', url=MAP_SITE_URL)
+        ]]
     )
-    builder.adjust(1)  # 1 кнопка в ряду
-
     await message.answer(
-        'Чтобы посмотреть карту маршрута, нажмите на кнопку ниже:',
-        reply_markup=builder.as_markup()
+        'Чтобы посмотреть карту маршрута, нажмите кнопку ниже:',
+        reply_markup=markup
     )
 
 
