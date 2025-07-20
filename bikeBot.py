@@ -211,6 +211,7 @@ def cart_keyboard():
 def during_rent_keyboard():
     return types.ReplyKeyboardMarkup(
         keyboard=[
+           # [types.KeyboardButton(text="🗺 Что посмотреть?")],
             [types.KeyboardButton(text="📞 Поддержка")],  # Кнопка для поддержки
             [types.KeyboardButton(text="⏱ Сколько времени катаюсь?")],  # Кнопка для времени
             [types.KeyboardButton(text="🔴 Завершить аренду")],  # Кнопка для завершения аренды
@@ -675,52 +676,54 @@ async def back_to_cart(callback: types.CallbackQuery):
         reply_markup=cart_keyboard()  # Возвращаем клавиатуру корзины
     )
 
+@dp.message(lambda m: m.contact is not None)
+async def handle_contact(message: types.Message):
+    user_id = message.from_user.id
+    data = user_rent_data.get(user_id)
+
+    if not data:
+        await message.answer("Пожалуйста, начните оформление аренды сначала через /start.")
+        return
+
+    phone = message.contact.phone_number
+    data["phone"] = phone
+    data["asked_phone"] = False
+
+    await message.answer("Спасибо! Ваш номер сохранён. Оформляем аренду…")
+    try:
+        await start_rent_real(message)
+    except Exception as e:
+        #await logger.info(f"Ошибка при записи в Google Таблицу: {e}")
+        await message.answer(f"Ошибка при запуске аренды: {e}")
+        #await logger.info("Ошибка при запуске аренды:", e)
+
 async def start_rent_real(message: types.Message):
-    print(f"[DEBUG] Запущен start_rent_real для user_id: {user_id}")
     user_id = message.from_user.id
     data = user_rent_data[user_id]
     data["start_time"] = datetime.now(KALININGRAD_TZ)
     data["is_renting"] = True
     keyboard = during_rent_keyboard()
+    #await logger.info(f"Аренда началась: {message.from_user.full_name}, id: {user_id}, телефон: {data.get('phone')}")
 
     cart_str = "\n".join([
-        f"• <b>{cat}</b> — <b>{qty}</b> шт. <i>({bike_categories[cat]['hour']}₽/ч)</i>"
-        for cat, qty in data["cart"].items()
+    f"• <b>{cat}</b> — <b>{qty}</b> шт. <i>({bike_categories[cat]['hour']}₽/ч)</i>"
+    for cat, qty in data["cart"].items()
     ])
-    total_hour_price = sum([
-        bike_categories[cat]['hour'] * qty
-        for cat, qty in data["cart"].items()
-    ])
+    total_hour_price = sum([bike_categories[cat]['hour'] * qty for cat, qty in data["cart"].items()])
 
-    # --- Защита при отправке сообщения ---
-    try:
-        await message.answer(
-            f"<b>Аренда началась!</b>\n"
-            f"<b>Время старта:</b> <u>{data['start_time'].strftime('%H:%M')}</u>\n"
-            "━━━━━━━━━━━━━━━━\n"
-            f"<b>Вы взяли:</b>\n{cart_str}\n"
-            "━━━━━━━━━━━━━━━━\n"
-            f"💸 <b>Стоимость за 1 час:</b> <u>{total_hour_price} руб.</u>\n"
-            "━━━━━━━━━━━━━━━━\n"
-            "Желаем вам приятной поездке 😊",
-            reply_markup=keyboard,
-            parse_mode="HTML"
-        )
-    except Exception as e:
-        await message.answer(f"❗ Ошибка при отправке сообщения об аренде: {e}")
-        return  # не продолжаем, если основное сообщение не отправилось
-
-    # --- Inline-кнопка миниаппа ---
-    try:
-        inline_keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-            [types.InlineKeyboardButton(
-                text="🗺 Что посмотреть?",
-                web_app=types.WebAppInfo(url="https://hdjsbwjjwb.github.io/miniapp/")
-            )]
-        ])
-        await message.answer("Откройте карту с интересными местами:", reply_markup=inline_keyboard)
-    except Exception as e:
-        await message.answer(f"⚠️ Ошибка при отправке inline-кнопки: {e}")
+    # --- КРАСИВОЕ СООБЩЕНИЕ ДЛЯ ПОЛЬЗОВАТЕЛЯ ---
+    await message.answer(
+        f"<b>Аренда началась!</b>\n"
+        f"<b>Время старта:</b> <u>{data['start_time'].strftime('%H:%M')}</u>\n"
+        "━━━━━━━━━━━━━━━━\n"
+        f"<b>Вы взяли:</b>\n{cart_str}\n"
+        "━━━━━━━━━━━━━━━━\n"
+        f"💸 <b>Стоимость за 1 час:</b> <u>{total_hour_price} руб.</u>\n"
+        "━━━━━━━━━━━━━━━━\n"
+        "Желаем вам приятной поездке 😊",
+        reply_markup=keyboard,
+        parse_mode="HTML"
+    )
 
     # --- Уведомление админу ---
     try:
@@ -733,8 +736,23 @@ async def start_rent_real(message: types.Message):
             f"Время: {data['start_time'].strftime('%H:%M')}\n"
             f"Корзина:\n{cart_str}"
         )
-    except Exception:
-        pass  # Не мешаем пользователю, если уведомление админу не сработало
+    except Exception as e:
+        
+        pass
+        #await logger.info(f"Не удалось отправить уведомление админу (начало): {e}")
+
+@dp.message(F.text == "🗺 Что посмотреть?")
+async def interesting_places(message: types.Message):
+    user_id = message.from_user.id
+    data = user_rent_data.get(user_id)  # Получаем данные о пользователе
+
+    if data and data.get("is_renting"):  # Проверяем, что аренда активна
+        # Генерация или получение маршрута интересных мест
+        route = "Ваш маршрут по интересным местам:\n1. Место 1\n2. Место 2\n3. Место 3"  # Пример маршрута
+        await message.answer(route, reply_markup=during_rent_keyboard())  # Отправляем маршрут с клавиатурой
+    else:
+        await message.answer("Ошибка! Аренда не активна. Пожалуйста, начните аренду.", reply_markup=main_menu_keyboard())  # Если аренда не активна
+
 
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
