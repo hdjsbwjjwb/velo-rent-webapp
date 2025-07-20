@@ -654,16 +654,7 @@ async def start_rent_preview(message: types.Message):
         reply_markup=contact_keyboard()
     )
     data["asked_phone"] = True
-###
-    markup = types.InlineKeyboardMarkup(
-        inline_keyboard=[[
-            types.InlineKeyboardButton(text='🗺 Открыть маршрут', url=MAP_SITE_URL)
-        ]]
-    )
-    await message.answer(
-        'Чтобы посмотреть карту маршрута, нажмите кнопку ниже:',
-        reply_markup=markup
-    )
+
 
 
 @dp.callback_query(F.data == "back_to_cart")
@@ -735,7 +726,17 @@ async def start_rent_real(message: types.Message):
         reply_markup=keyboard,
         parse_mode="HTML"
     )
-
+###
+    markup = types.InlineKeyboardMarkup(
+        inline_keyboard=[[
+            types.InlineKeyboardButton(text='🗺 Открыть маршрут', url=MAP_SITE_URL)
+        ]]
+    )
+    await message.answer(
+        'Чтобы посмотреть карту маршрута, нажмите кнопку ниже:',
+        reply_markup=markup
+    )
+    
     # --- Уведомление админу ---
     try:
         await bot.send_message(
