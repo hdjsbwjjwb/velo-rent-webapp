@@ -726,10 +726,13 @@ async def start_rent_real(message: types.Message):
         reply_markup=keyboard,
         parse_mode="HTML"
     )
-###
+    # 2) Отдельное сообщение с Inline-кнопкой «Открыть маршрут»
     markup = types.InlineKeyboardMarkup(
         inline_keyboard=[[
-            types.InlineKeyboardButton(text='🗺 Открыть маршрут', url=MAP_SITE_URL)
+            types.InlineKeyboardButton(
+                text='🗺 Открыть маршрут',
+                url=MAP_SITE_URL
+            )
         ]]
     )
     await message.answer(
