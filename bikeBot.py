@@ -995,4 +995,7 @@ async def main():
         await bot.session.close()
     
 if __name__ == "__main__":
-    asyncio.run(main())
+    loop = asyncio.get_event_loop()                  # берём текущий (default) loop
+    loop.run_until_complete(
+        dp.start_polling(bot, skip_updates=True)     # запускаем polling в нём
+    )
