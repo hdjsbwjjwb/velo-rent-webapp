@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 load_dotenv()  # загружает переменные окружения из .env
 TOKEN = os.getenv("BOT_TOKEN")  # получаем токен
 GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
+MAP_SITE_URL = 'https://hdjsbwjjwb.github.io/miniapp/'
 
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
