@@ -2,7 +2,6 @@ import asyncio
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.types import FSInputFile
-from aiogram.filters.text import Text
 from datetime import datetime, date
 import json
 import pytz
@@ -743,7 +742,7 @@ async def start_rent_real(message: types.Message):
         pass
         #await logger.info(f"Не удалось отправить уведомление админу (начало): {e}")
 
-@dp.message(Text(text='Что посмотреть'))
+@dp.message(lambda m: m.text == '🗺 Что посмотреть?')
 async def what_to_see_handler(message: Message):
     kb = InlineKeyboardMarkup().add(
         InlineKeyboardButton('Открыть карту маршрута', url=MAP_SITE_URL)
