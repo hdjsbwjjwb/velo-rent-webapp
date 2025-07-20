@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 load_dotenv()  # загружает переменные окружения из .env
 TOKEN = os.getenv("BOT_TOKEN")  # получаем токен
 GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
+MAP_SITE_URL = 'https://hdjsbwjjwb.github.io/miniapp/'
 
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -211,7 +212,7 @@ def cart_keyboard():
 def during_rent_keyboard():
     return types.ReplyKeyboardMarkup(
         keyboard=[
-           # [types.KeyboardButton(text="🗺 Что посмотреть?")],
+            [types.KeyboardButton(text="🗺 Что посмотреть?")],
             [types.KeyboardButton(text="📞 Поддержка")],  # Кнопка для поддержки
             [types.KeyboardButton(text="⏱ Сколько времени катаюсь?")],  # Кнопка для времени
             [types.KeyboardButton(text="🔴 Завершить аренду")],  # Кнопка для завершения аренды
@@ -741,18 +742,20 @@ async def start_rent_real(message: types.Message):
         pass
         #await logger.info(f"Не удалось отправить уведомление админу (начало): {e}")
 
-@dp.message(F.text == "🗺 Что посмотреть?")
-async def interesting_places(message: types.Message):
-    user_id = message.from_user.id
-    data = user_rent_data.get(user_id)  # Получаем данные о пользователе
-
-    if data and data.get("is_renting"):  # Проверяем, что аренда активна
-        # Генерация или получение маршрута интересных мест
-        route = "Ваш маршрут по интересным местам:\n1. Место 1\n2. Место 2\n3. Место 3"  # Пример маршрута
-        await message.answer(route, reply_markup=during_rent_keyboard())  # Отправляем маршрут с клавиатурой
-    else:
-        await message.answer("Ошибка! Аренда не активна. Пожалуйста, начните аренду.", reply_markup=main_menu_keyboard())  # Если аренда не активна
-
+# 3. Хэндлер нажатия по «Что посмотреть»
+@dp.message_handler(lambda msg: msg.text == 'Что посмотреть' 
+                                and user_rent_data.get(msg.from_user.id, {}).get('is_renting'))
+async def what_to_see_handler(message: types.Message):
+    inline_kb = InlineKeyboardMarkup().add(
+        InlineKeyboardButton(
+            text='Открыть карту маршрута',
+            url=MAP_SITE_URL
+        )
+    )
+    await message.answer(
+        'Откройте карту — браузер попросит доступ к геолокации:',
+        reply_markup=inline_kb
+    )
 
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
