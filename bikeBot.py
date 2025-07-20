@@ -3,7 +3,8 @@ from aiogram import Bot, Dispatcher, types, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.types import FSInputFile
 from datetime import datetime, date
-from aiogram.types import Message
+from aiogram.filters.text import Text
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 import json
 import pytz
 import os
