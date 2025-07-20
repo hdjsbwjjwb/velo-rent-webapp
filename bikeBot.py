@@ -742,20 +742,19 @@ async def start_rent_real(message: types.Message):
         pass
         #await logger.info(f"Не удалось отправить уведомление админу (начало): {e}")
 
-# 3. Хэндлер нажатия по «Что посмотреть»
-@dp.message_handler(lambda msg: msg.text == 'Что посмотреть' 
-                                and user_rent_data.get(msg.from_user.id, {}).get('is_renting'))
-async def what_to_see_handler(message: types.Message):
-    inline_kb = InlineKeyboardMarkup().add(
-        InlineKeyboardButton(
-            text='Открыть карту маршрута',
-            url=MAP_SITE_URL
-        )
+@dp.message(Text(text='Что посмотреть'))
+async def what_to_see_handler(message: Message):
+    kb = InlineKeyboardMarkup().add(
+        InlineKeyboardButton('Открыть карту маршрута', url=MAP_SITE_URL)
     )
     await message.answer(
-        'Откройте карту — браузер попросит доступ к геолокации:',
-        reply_markup=inline_kb
+        'Откройте карту — браузер запросит разрешение на геолокацию:',
+        reply_markup=kb
     )
+
+if __name__ == '__main__':
+    from aiogram import executor
+    executor.start_polling(dp, skip_updates=True)
 
 @dp.message(F.text == "🔴 Завершить аренду")
 async def finish_rent(message: types.Message):
