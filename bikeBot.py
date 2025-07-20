@@ -3,8 +3,6 @@ from aiogram import Bot, Dispatcher, types, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.types import FSInputFile
 from datetime import datetime, date
-from aiogram.filters.text import Text
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 import json
 import pytz
 import os
@@ -744,18 +742,17 @@ async def start_rent_real(message: types.Message):
         pass
         #await logger.info(f"Не удалось отправить уведомление админу (начало): {e}")
 
-@dp.message(Text(text='🗺 Что посмотреть?'))
-async def what_to_see_handler(message: Message):
-    inline_kb = InlineKeyboardMarkup().add(
-        InlineKeyboardButton(text='Открыть карту маршрута', url=MAP_SITE_URL)
+@dp.message(lambda m: m.text == '🗺 Что посмотреть?')
+async def what_to_see_handler(message: types.Message):
+    kb = types.InlineKeyboardMarkup().add(
+        types.InlineKeyboardButton(text='Открыть карту маршрута', url=MAP_SITE_URL)
     )
     await message.answer(
         'Откройте карту — браузер запросит разрешение на геолокацию:',
-        reply_markup=inline_kb
+        reply_markup=kb
     )
 
 if __name__ == '__main__':
-    # Запуск long-polling
     asyncio.run(dp.start_polling(bot, skip_updates=True))
 
 @dp.message(F.text == "🔴 Завершить аренду")
