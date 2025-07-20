@@ -2,7 +2,7 @@ import asyncio
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.types import FSInputFile
-from aiogram.filters import Text 
+from aiogram.filters.text import Text
 from datetime import datetime, date
 import json
 import pytz
