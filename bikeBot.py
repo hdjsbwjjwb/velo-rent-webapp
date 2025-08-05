@@ -235,7 +235,7 @@ bike_categories = {
 QUANTITY_CHOICES = [1, 2, 3, 4, 5]
 user_rent_data = {}
 KALININGRAD_TZ = pytz.timezone('Europe/Kaliningrad')
-
+print("✅ BOT_TOKEN =", TOKEN)
 bot = Bot(
     token=TOKEN,
     default=DefaultBotProperties(parse_mode="HTML")
@@ -1096,6 +1096,7 @@ if __name__ == "__main__":
     loop.run_until_complete(
         dp.start_polling(bot, skip_updates=True)     # запускаем polling в нём
     )
+
 
 
 
