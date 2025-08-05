@@ -1080,8 +1080,9 @@ async def send_daily_report():
 
 
 async def main():
-    # Загружаем активные аренды при старте
     global user_rent_data
+
+    print("🚀 Запуск main()")  # 🔍
     user_rent_data.update(load_active_rents_from_gsheet())
     print(f"🔁 Восстановлены {len(user_rent_data)} активных аренд из Google Sheets.")
 
@@ -1095,5 +1096,6 @@ if __name__ == "__main__":
     loop.run_until_complete(
         dp.start_polling(bot, skip_updates=True)     # запускаем polling в нём
     )
+
 
 
