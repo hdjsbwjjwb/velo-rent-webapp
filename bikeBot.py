@@ -160,37 +160,47 @@ def remove_active_rent_from_gsheet(user_id: int):
 
 
 def load_active_rents_from_gsheet() -> dict:
+    print("📥 Запуск функции load_active_rents_from_gsheet()")  # 🔍
+
     scope = [
         "https://spreadsheets.google.com/feeds",
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive"
     ]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
-    client = gspread.authorize(creds)
-    sheet = client.open_by_key(GOOGLE_SHEET_ID)
     try:
-        sheet_acts = sheet.worksheet("ActiveRentals")
-    except:
-        return {}
-
-    records = sheet_acts.get_all_records()
-    restored_data = {}
-    for row in records:
+        creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+        client = gspread.authorize(creds)
+        sheet = client.open_by_key(GOOGLE_SHEET_ID)
         try:
-            user_id = int(row["user_id"])
-            restored_data[user_id] = {
-                "user_name": row.get("user_name"),
-                "phone": row.get("phone"),
-                "cart": json.loads(row.get("cart", "{}")),
-                "start_time": datetime.fromisoformat(row.get("start_time")),
-                "is_renting": True,
-                "awaiting_quantity": False,
-                "last_category": None,
-                "asked_phone": False
-            }
+            sheet_acts = sheet.worksheet("ActiveRentals")
         except Exception as e:
-            print(f"Ошибка восстановления аренды: {e}")
-    return restored_data
+            print("❌ Лист ActiveRentals не найден:", e)
+            return {}
+
+        records = sheet_acts.get_all_records()
+        print(f"📄 Загружено {len(records)} строк из ActiveRentals")  # 🔍
+
+        restored_data = {}
+        for row in records:
+            try:
+                user_id = int(row["user_id"])
+                restored_data[user_id] = {
+                    "user_name": row.get("user_name"),
+                    "phone": row.get("phone"),
+                    "cart": json.loads(row.get("cart", "{}")),
+                    "start_time": datetime.fromisoformat(row.get("start_time")),
+                    "is_renting": True,
+                    "awaiting_quantity": False,
+                    "last_category": None,
+                    "asked_phone": False
+                }
+            except Exception as e:
+                print(f"⚠️ Ошибка в строке: {row} — {e}")
+        return restored_data
+
+    except Exception as e:
+        print("💥 Ошибка в load_active_rents_from_gsheet:", e)
+        return {}
 
 def get_gsheet_records():
     scope = [
@@ -1085,4 +1095,5 @@ if __name__ == "__main__":
     loop.run_until_complete(
         dp.start_polling(bot, skip_updates=True)     # запускаем polling в нём
     )
+
 
